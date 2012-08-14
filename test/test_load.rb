@@ -17,7 +17,7 @@ class TestDebugLoad < Test::Unit::TestCase
 
   def test_debug_load
     src_dir = File.dirname(__FILE__)
-    prog_script = File.join(src_dir, '..', 'example', 'gcd.rb')
+    prog_script = File.join(src_dir, 'example', 'gcd.rb')
 
     # Without stopping
     bt = Debugger.debug_load(prog_script, false)
@@ -33,7 +33,7 @@ class TestDebugLoad < Test::Unit::TestCase
     Debugger.stop
 
     # Test that we get a proper backtrace on a script that raises 'abc'
-    prog_script = File.join(src_dir, '..', 'example', 'raise.rb')
+    prog_script = File.join(src_dir, 'example', 'raise.rb')
     bt = Debugger.debug_load(prog_script, false)
     assert_equal('abc', bt.to_s)
     assert(Debugger.started?)
