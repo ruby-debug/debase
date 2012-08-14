@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require File.expand_path("../../helper", __FILE__)
+require File.expand_path("helper", File.dirname(__FILE__))
 
 # Some tests of Debugger module in C extension ruby_debug 
 class TestRubyDebug < Test::Unit::TestCase
