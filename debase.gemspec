@@ -9,7 +9,12 @@ Gem::Specification.new do |s|
   s.email       = ["dennis.ushakov@gmail.com"]
   s.homepage    = ""
   s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.description = <<-EOF
+    ruby-debug is a fast implementation of the standard Ruby debugger debug.rb.
+    It is implemented by utilizing a new Ruby C API hook. The core component
+    provides support that front-ends can build on. It provides breakpoint
+    handling, bindings for stack frames among other things.
+  EOF
 
   s.rubyforge_project = "debase"
 
