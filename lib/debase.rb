@@ -1,3 +1,5 @@
+$LOAD_PATH << File.dirname(__FILE__) + "/../ext"
+require "debase_internals"
 require "debase/version"
 require "debase/context"
 require "debase/catchpoint"
@@ -20,49 +22,35 @@ module Debase
       Debase.const_set('PROG_SCRIPT', $0) unless defined? Debugger::PROG_SCRIPT
       Debase.const_set('INITIAL_DIR', Dir.pwd) unless defined? Debugger::INITIAL_DIR
       @contexts[Thread.current] = Context.new(Thread.current)
-      set_trace_func(proc do |event, file, line, id, binding, klass|
-        process(event, file, line, id, binding, klass)
-      end)
+      setup_tracepoints
     end
 
+    def setup_tracepoints
+      trace = TracePoint.trace(:line) do |tp|
+        current_context.update(tp)
+        #b = Breakpoint.find(@breakpoints, file, line)
+        #current_context.at_breakpoint b if b
+        #current_context.at_line file, line
+      end
+
+      trace = TracePoint.trace(:call, :c_call, :b_call) do |tp|
+        update_contexts
+        current_context.push(tp)
+      end
+
+
+      trace = TracePoint.trace(:return, :c_return, :b_return) do |tp|
+        update_contexts
+        #current_context.at_return file, line
+        current_context.pop
+      end
+
+    end  
+
     def stop
-      set_trace_func nil
       @contexts = nil
       @breakpoints = nil
       @catchpoints = nil
-    end
-
-    def process(event, file, line, id, binding, klass)
-      update_contexts
-
-      if event == "line" && !ignored?(file)
-        current_context.update(file, line, binding, klass)
-        b = Breakpoint.find(@breakpoints, file, line)
-        current_context.at_breakpoint b if b
-        current_context.at_line file, line
-      end
-
-      if (event == "call" || event == "c-call") && !ignored?(file)
-        current_context.push(file, line, binding, klass)
-      end
-
-      if (event == "return" || event == "c-return") && !ignored?(file)
-        current_context.at_return file, line
-        current_context.pop
-      end
-    end
-
-    def update_contexts
-      list = Thread.list
-      list.each do |thread|
-        unless @contexts[thread]
-          @contexts[thread] << Context.new(thread)
-        end
-      end
-
-      @contexts.each_key do |key|
-        @contexts.delete(key) unless key.alive?
-      end
     end
 
     def debug_load(file, stop = false, increment_start = false)
