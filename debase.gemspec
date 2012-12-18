@@ -8,10 +8,10 @@ Gem::Specification.new do |s|
   s.authors     = ["Dennis Ushakov"]
   s.email       = ["dennis.ushakov@gmail.com"]
   s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
+  s.summary     = %q{debase is a fast implementation of the standard Ruby debugger debug.rb for Ruby 2.0}
   s.description = <<-EOF
-    ruby-debug is a fast implementation of the standard Ruby debugger debug.rb.
-    It is implemented by utilizing a new Ruby C API hook. The core component
+    debase is a fast implementation of the standard Ruby debugger debug.rb for Ruby 2.0.
+    It is implemented by utilizing a new Ruby TracePoint class. The core component
     provides support that front-ends can build on. It provides breakpoint
     handling, bindings for stack frames among other things.
   EOF
@@ -25,8 +25,6 @@ Gem::Specification.new do |s|
 
   s.extensions = ["ext/extconf.rb"]
 
-  # specify any dependencies here; for example:
   s.add_development_dependency "test-unit"
   s.add_development_dependency "rake"
-  # s.add_runtime_dependency "rest-client"
 end
