@@ -1,21 +1,19 @@
 module Debase
   class Breakpoint
-    attr_reader :file, :line
+    attr_reader :source, :pos, :id
+    attr_accessor :expr
 
-    def initialize(id, file, line)
-      @bid = id
-      @file = file
-      @line = line
-    end
-
-    def bid
-      @bid
+    def initialize(id, source, pos, expr)
+      @id = id
+      @source = source
+      @pos = pos
+      @expr = expr
     end
 
     # @param [Array<Breakpoint>] breakpoints
     def self.remove(breakpoints, id)
       breakpoints.each do |breakpoint|
-        if breakpoint.bid == id
+        if breakpoint.id == id
           breakpoints.delete breakpoint
           return
         end
@@ -24,9 +22,9 @@ module Debase
 
     # @param [Array<Breakpoint>] breakpoints
     # @return [Breakpoint]
-    def self.find(breakpoints, file, line)
+    def self.find(breakpoints, source, pos, binding)
       breakpoints.each do |breakpoint|
-        if breakpoint.file == file && breakpoint.line == line
+        if breakpoint.source == source && breakpoint.pos == pos
           return breakpoint
         end
       end

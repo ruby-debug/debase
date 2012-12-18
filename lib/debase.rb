@@ -1,4 +1,3 @@
-$LOAD_PATH << File.dirname(__FILE__) + "/../ext"
 require "debase_internals"
 require "debase/version"
 require "debase/context"
@@ -7,45 +6,25 @@ require "debase/breakpoint"
 
 module Debase
   class << self
-    IGNORED_FOLDER = File.expand_path(".", File.dirname(__FILE__))
     attr_reader :breakpoints
+    attr_accessor :handler
+
+    # possibly deprecated options
+    attr_accessor :keep_frame_binding, :tracing
 
     def started?
      !!@contexts
     end
 
-    def start_
+    def start(options={}, &block)      
       @contexts = {}
       @breakpoints = []
       @catchpoints = {}
       @breakpoints_count = 0
+      @locked = []
       Debase.const_set('PROG_SCRIPT', $0) unless defined? Debugger::PROG_SCRIPT
       Debase.const_set('INITIAL_DIR', Dir.pwd) unless defined? Debugger::INITIAL_DIR
-      @contexts[Thread.current] = Context.new(Thread.current)
-      setup_tracepoints
-    end
-
-    def setup_tracepoints
-      trace = TracePoint.trace(:line) do |tp|
-        current_context.update(tp)
-        #b = Breakpoint.find(@breakpoints, file, line)
-        #current_context.at_breakpoint b if b
-        #current_context.at_line file, line
-      end
-
-      trace = TracePoint.trace(:call, :c_call, :b_call) do |tp|
-        update_contexts
-        current_context.push(tp)
-      end
-
-
-      trace = TracePoint.trace(:return, :c_return, :b_return) do |tp|
-        update_contexts
-        #current_context.at_return file, line
-        current_context.pop
-      end
-
-    end  
+    end 
 
     def stop
       @contexts = nil
@@ -55,7 +34,7 @@ module Debase
 
     def debug_load(file, stop = false, increment_start = false)
       begin
-        start_
+        setup_tracepoints
         load file
         return nil
       rescue Exception => e
@@ -65,19 +44,16 @@ module Debase
 
     # @param [String] file
     # @param [Fixnum] line
-    def add_breakpoint(file, line)
+    # @param [String] expr
+    def add_breakpoint(file, line, expr)
       @breakpoints_count = @breakpoints_count + 1
-      breakpoint = Breakpoint.new(@breakpoints_count, file, line)
+      breakpoint = Breakpoint.new(@breakpoints_count, file, line, expr)
       @breakpoints << breakpoint
       breakpoint
     end
 
     def remove_breakpoint(id)
       Breakpoint.remove @breakpoints, id
-    end
-
-    def current_context
-      @contexts[Thread.current]
     end
 
     def source_reload; {} end
@@ -104,18 +80,24 @@ module Debase
     end
 
     private
-    def ignored?(file)
-      file == nil || starts_with?(file, IGNORED_FOLDER)
-    end
-
     def check_started
       raise RuntimeError.new unless started?
+    end
+
+    def check_not_started
+      raise RuntimeError.new if started?
     end
 
     def starts_with?(what, prefix)
       prefix = prefix.to_s
       what[0, prefix.length] == prefix
     end
+  end
+  
+  class DebugThread < Thread
+    def inherited
+      raise RuntimeError.new("Can't inherit Debugger::DebugThread class")
+    end  
   end
 end
 
