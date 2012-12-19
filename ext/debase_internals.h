@@ -39,7 +39,7 @@ typedef struct debug_frame_t
 typedef struct {
   debug_frame_t *stack;
   int stack_size;
-  
+
   VALUE thread;
   int thnum;
   int flags;
@@ -49,11 +49,15 @@ typedef struct {
   int dest_frame;
   int stop_line;
   int stop_frame;
+
+  char *last_file;
+  int last_line;
 } debug_context_t;
 
 /* functions */
 extern VALUE Init_context(VALUE mDebase);
 extern VALUE context_create(VALUE thread, VALUE cDebugThread);
+extern void reset_stepping_stop_points(debug_context_t *context);
 extern VALUE Context_ignored(VALUE self);
 extern void push_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE self);
 extern void pop_frame(VALUE context_object);

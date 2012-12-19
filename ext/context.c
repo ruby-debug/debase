@@ -5,6 +5,17 @@ static int thnum_current = 0;
 
 static VALUE idAlive;
 
+/* "Step", "Next" and "Finish" do their work by saving information
+   about where to stop next. reset_stopping_points removes/resets this
+   information. */
+extern void
+reset_stepping_stop_points(debug_context_t *context)
+{
+    context->dest_frame = -1;
+    context->stop_line  = -1;
+    context->stop_next  = -1;
+}
+
 static inline VALUE
 Context_thnum(VALUE self) {
   debug_context_t *context;
@@ -136,6 +147,9 @@ context_create(VALUE thread, VALUE cDebugThread) {
   context->thnum = ++thnum_current;
   context->thread = thread;
   context->flags = 0;
+  context->last_file = NULL;
+  context->last_line = -1;
+  reset_stepping_stop_points(context);
   if(rb_obj_class(thread) == cDebugThread) CTX_FL_SET(context, CTX_FL_IGNORE);
   return Data_Wrap_Struct(cContext, Context_mark, Context_free, context);
 }
@@ -248,6 +262,70 @@ Context_stop_reason(VALUE self)
     return ID2SYM(rb_intern(symbol));
 }
 
+static VALUE
+Context_stop_next(int argc, VALUE *argv, VALUE self)
+{
+  VALUE steps;
+  VALUE force;
+  debug_context_t *context;
+
+  rb_scan_args(argc, argv, "11", &steps, &force);
+  if(FIX2INT(steps) < 0) rb_raise(rb_eRuntimeError, "Steps argument can't be negative.");
+
+  Data_Get_Struct(self, debug_context_t, context);
+  context->stop_next = FIX2INT(steps);
+  if(RTEST(force))
+      CTX_FL_SET(context, CTX_FL_FORCE_MOVE);
+  else
+      CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
+
+  return steps;
+}
+
+static VALUE
+Context_step_over(int argc, VALUE *argv, VALUE self)
+{
+  VALUE lines, frame, force;
+  debug_context_t *context;
+
+  Data_Get_Struct(self, debug_context_t, context);
+  if(context->stack_size == 0)
+    rb_raise(rb_eRuntimeError, "No frames collected.");
+
+  rb_scan_args(argc, argv, "12", &lines, &frame, &force);
+  context->stop_line = FIX2INT(lines);
+  CTX_FL_UNSET(context, CTX_FL_STEPPED);
+  if(frame == Qnil)
+  {
+    context->dest_frame = context->stack_size;
+  }
+  else
+  {
+    if(FIX2INT(frame) < 0 && FIX2INT(frame) >= context->stack_size)
+      rb_raise(rb_eRuntimeError, "Destination frame is out of range.");
+    context->dest_frame = context->stack_size - FIX2INT(frame);
+  }
+  if(RTEST(force))
+    CTX_FL_SET(context, CTX_FL_FORCE_MOVE);
+  else
+    CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
+
+  return Qnil;
+}
+
+static VALUE
+Context_stop_frame(VALUE self, VALUE frame)
+{
+  debug_context_t *debug_context;
+
+  Data_Get_Struct(self, debug_context_t, debug_context);
+  if(FIX2INT(frame) < 0 && FIX2INT(frame) >= debug_context->stack_size)
+    rb_raise(rb_eRuntimeError, "Stop frame is out of range.");
+  debug_context->stop_frame = debug_context->stack_size - FIX2INT(frame);
+
+  return frame;
+}
+
 /*
  *   Document-class: Context
  *
@@ -269,14 +347,14 @@ Init_context(VALUE mDebase)
   rb_define_method(cContext, "frame_line", Context_frame_line, -1);
   rb_define_method(cContext, "frame_binding", Context_frame_binding, -1);
   rb_define_method(cContext, "frame_self", Context_frame_self, -1);
+  rb_define_method(cContext, "stop_next=", Context_stop_next, -1);
+  rb_define_method(cContext, "step", Context_stop_next, -1);
+  rb_define_method(cContext, "step_over", Context_step_over, -1);
+  rb_define_method(cContext, "stop_frame=", Context_stop_frame, 1);
 
   idAlive = rb_intern("alive?");
 
   return cContext;
-    // rb_define_method(cContext, "stop_next=", context_stop_next, -1);
-    // rb_define_method(cContext, "step", context_stop_next, -1);
-    // rb_define_method(cContext, "step_over", context_step_over, -1);
-    // rb_define_method(cContext, "stop_frame=", context_stop_frame, 1);
     // rb_define_method(cContext, "suspend", context_suspend, 0);
     // rb_define_method(cContext, "suspended?", context_is_suspended, 0);
     // rb_define_method(cContext, "resume", context_resume, 0);

@@ -136,6 +136,16 @@ load_frame_info(VALUE trace_point, VALUE *path, VALUE *lineno, VALUE *binding, V
   *self = rb_funcall(trace_point, idSelf, 0);
 }
 
+static void 
+call_at_line(debug_context_t *context, char *file, int line, VALUE context_object, VALUE path, VALUE lineno)
+{
+  CTX_FL_UNSET(context, CTX_FL_STEPPED);
+  CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
+  context->last_file = file;
+  context->last_line = line;
+  rb_funcall(context_object, idAtLine, 2, path, lineno);
+}
+
 static void
 process_line_event(VALUE trace_point, void *data)
 {
@@ -146,18 +156,47 @@ process_line_event(VALUE trace_point, void *data)
   VALUE context_object;
   VALUE breakpoint;
   debug_context_t *context;
+  char *file;
+  int line;
+  int moved;
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, CURRENT_THREAD())) return;
 
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
-  update_frame(context_object, RSTRING_PTR(path), FIX2INT(lineno), binding, self);
+  file = RSTRING_PTR(path);
+  line = FIX2INT(lineno);
+  update_frame(context_object, file, line, binding, self);
+
+  moved = context->last_line != line || context->last_file == NULL ||
+          strcmp(context->last_file, file) != 0;
+
+  if(context->dest_frame == -1 || context->stack_size == context->dest_frame)
+  {
+      if(moved || !CTX_FL_TEST(context, CTX_FL_FORCE_MOVE))
+          context->stop_next--;
+      if(context->stop_next < 0)
+          context->stop_next = -1;
+      if(moved || (CTX_FL_TEST(context, CTX_FL_STEPPED) && !CTX_FL_TEST(context, CTX_FL_FORCE_MOVE)))
+      {
+          context->stop_line--;
+          CTX_FL_UNSET(context, CTX_FL_STEPPED);
+      }
+  }
+  else if(context->stack_size < context->dest_frame)
+  {
+      context->stop_next = 0;
+  }
+
   breakpoint = rb_funcall(cBreakpoint, idFind, 4, rb_ivar_get(mDebase, idBreakpoints), path, lineno, binding);
-  if (breakpoint != Qnil) {
+  if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
     context->stop_reason = CTX_STOP_STEP;
-    rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
-    rb_funcall(context_object, idAtLine, 2, path, lineno);
+    if (breakpoint != Qnil) {
+      rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
+    }
+    reset_stepping_stop_points(context);
+    call_at_line(context, file, line, context_object, path, lineno);
   }
   cleanup(context);
 }
