@@ -14,8 +14,7 @@ module Debase
     def self.remove(breakpoints, id)
       breakpoints.each do |breakpoint|
         if breakpoint.id == id
-          breakpoints.delete breakpoint
-          return
+          return breakpoints.delete breakpoint
         end
       end
     end
