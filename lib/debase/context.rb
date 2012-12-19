@@ -4,13 +4,16 @@ module Debase
       result = {}
       binding = frame_binding(frame_no)
       locals = eval("local_variables", binding)
-      locals.each {|local| result[local] = eval(local.to_s, binding)}
+      locals.each {|local| result[local.to_s] = eval(local.to_s, binding)}
       result
     end  
 
     def frame_class(frame_no=0)
-      raise ArgumentError.new("Invalid frame number #{frame_no}, stack (0..#{@stack.length - 1})") unless frame_no <= @stack.length
-      @stack[@stack.length - frame_no - 1].klass
+      frame_self(frame_no).class
+    end
+
+    def frame_args_info(frame_no=0)
+      nil
     end
 
     def handler

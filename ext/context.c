@@ -127,7 +127,7 @@ Context_free(debug_context_t *context) {
 }
 
 extern VALUE
-context_create(VALUE thread) {
+context_create(VALUE thread, VALUE cDebugThread) {
   debug_context_t *context;
 
   context = ALLOC(debug_context_t);
@@ -135,6 +135,8 @@ context_create(VALUE thread) {
   context->stack = NULL;
   context->thnum = ++thnum_current;
   context->thread = thread;
+  context->flags = 0;
+  if(rb_obj_class(thread) == cDebugThread) CTX_FL_SET(context, CTX_FL_IGNORE);
   return Data_Wrap_Struct(cContext, Context_mark, Context_free, context);
 }
 

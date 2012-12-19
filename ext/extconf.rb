@@ -7,5 +7,7 @@ require "mkmf"
 config_file = File.join(File.dirname(__FILE__), 'config_options.rb')
 load config_file if File.exist?(config_file)
 
+$CFLAGS='-Wall -Werror'
+
 dir_config("ruby")
 create_makefile("debase_internals")

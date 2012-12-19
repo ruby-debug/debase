@@ -16,17 +16,24 @@ module Debase
      !!@contexts
     end
 
-    def start(options={}, &block)      
+    def start(options={}, &block)
+      Debugger.const_set('ARGV', ARGV.clone) unless defined? Debugger::ARGV
+      Debugger.const_set('PROG_SCRIPT', $0) unless defined? Debugger::PROG_SCRIPT
+      Debugger.const_set('INITIAL_DIR', Dir.pwd) unless  defined? Debugger::INITIAL_DIR
+      return Debugger.started? ? block && block.call(self) : Debugger.start_(&block) 
+    end
+
+    def start_
       @contexts = {}
       @breakpoints = []
       @catchpoints = {}
       @breakpoints_count = 0
       @locked = []
-      Debase.const_set('PROG_SCRIPT', $0) unless defined? Debugger::PROG_SCRIPT
-      Debase.const_set('INITIAL_DIR', Dir.pwd) unless defined? Debugger::INITIAL_DIR
-    end 
+      setup_tracepoints
+    end
 
     def stop
+      remove_tracepoints
       @contexts = nil
       @breakpoints = nil
       @catchpoints = nil
@@ -34,7 +41,8 @@ module Debase
 
     def debug_load(file, stop = false, increment_start = false)
       begin
-        setup_tracepoints
+        start
+        prepare_context(file, stop)
         load file
         return nil
       rescue Exception => e
@@ -45,7 +53,7 @@ module Debase
     # @param [String] file
     # @param [Fixnum] line
     # @param [String] expr
-    def add_breakpoint(file, line, expr)
+    def add_breakpoint(file, line, expr=nil)
       @breakpoints_count = @breakpoints_count + 1
       breakpoint = Breakpoint.new(@breakpoints_count, file, line, expr)
       @breakpoints << breakpoint
@@ -95,7 +103,7 @@ module Debase
   end
   
   class DebugThread < Thread
-    def inherited
+    def self.inherited
       raise RuntimeError.new("Can't inherit Debugger::DebugThread class")
     end  
   end
