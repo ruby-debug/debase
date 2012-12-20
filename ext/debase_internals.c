@@ -10,6 +10,7 @@ static VALUE locker = Qnil;
 static VALUE tpLine;
 static VALUE tpCall;
 static VALUE tpReturn;
+static VALUE tpRaise;
 
 static VALUE idList;
 static VALUE idCurrent;
@@ -21,8 +22,10 @@ static VALUE idBinding;
 static VALUE idAtLine;
 static VALUE idAtReturn;
 static VALUE idAtBreakpoint;
+static VALUE idAtCatchpoint;
 static VALUE idFind;
 static VALUE idBreakpoints;
+static VALUE idCatchpoints;
 static VALUE idSelf;
 
 #define CURRENT_THREAD() (rb_funcall(rb_cThread, idCurrent, 0))
@@ -246,6 +249,48 @@ process_call_event(VALUE trace_point, void *data)
   cleanup(context);
 }
 
+static void
+process_raise_event(VALUE trace_point, void *data)
+{
+  VALUE path;
+  VALUE lineno;
+  VALUE binding;
+  VALUE self;
+  VALUE context_object;
+  VALUE catchpoints;
+  VALUE hit_count;
+  VALUE exception_name;
+  debug_context_t *context;
+  char *file;
+  int line;
+  int c_hit_count;
+
+  context_object = Debase_current_context(mDebase);
+  Data_Get_Struct(context_object, debug_context_t, context);
+  if (!check_start_processing(context, CURRENT_THREAD())) return;
+
+  load_frame_info(trace_point, &path, &lineno, &binding, &self);
+  file = RSTRING_PTR(path);
+  line = FIX2INT(lineno);
+  update_frame(context_object, file, line, binding, self);
+  catchpoints = rb_ivar_get(mDebase, idCatchpoints);
+
+  if (catchpoint_hit_count(catchpoints, rb_errinfo(), &exception_name) != Qnil) {
+    /* On 64-bit systems with gcc and -O2 there seems to be
+       an optimization bug in running INT2FIX(FIX2INT...)..)
+       So we do this in two steps.
+      */
+    c_hit_count = FIX2INT(rb_hash_aref(catchpoints, exception_name)) + 1;
+    hit_count = INT2FIX(c_hit_count);
+    rb_hash_aset(catchpoints, exception_name, hit_count);
+    context->stop_reason = CTX_STOP_CATCHPOINT;
+    rb_funcall(context_object, idAtCatchpoint, 1, rb_errinfo());
+    call_at_line(context, file, line, context_object, path, lineno);
+  }
+
+  cleanup(context);
+}
+
 static VALUE
 Debase_setup_tracepoints(VALUE self)
 {	
@@ -257,6 +302,8 @@ Debase_setup_tracepoints(VALUE self)
   tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_B_CALL | RUBY_EVENT_END, 
                              process_call_event, NULL);
   rb_tracepoint_enable(tpCall);
+  tpRaise = rb_tracepoint_new(Qnil, RUBY_EVENT_RAISE, process_raise_event, NULL);
+  rb_tracepoint_enable(tpRaise);
   return Qnil;
 }
 
@@ -269,6 +316,8 @@ Debase_remove_tracepoints(VALUE self)
   tpReturn = Qnil;
   if (tpCall != Qnil) rb_tracepoint_disable(tpCall);
   tpCall = Qnil;
+  if (tpCall != Qnil) rb_tracepoint_disable(tpRaise);
+  tpRaise = Qnil;
   return Qnil;
 }
 
@@ -312,9 +361,11 @@ Init_debase_internals()
   idBinding = rb_intern("binding");
   idAtLine = rb_intern("at_line");
   idAtReturn = rb_intern("at_return");
-  idAtBreakpoint = rb_intern("at_breakpoint");  
+  idAtBreakpoint = rb_intern("at_breakpoint");
+  idAtCatchpoint = rb_intern("at_catchpoint");   
   idFind = rb_intern("find");
   idBreakpoints = rb_intern("@breakpoints");
+  idCatchpoints = rb_intern("@catchpoints");
   idSelf = rb_intern("self");
 
   cContext = Init_context(mDebase);
