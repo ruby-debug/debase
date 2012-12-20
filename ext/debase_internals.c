@@ -215,6 +215,12 @@ process_return_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, CURRENT_THREAD())) return;
 
+  if(context->stack_size == context->stop_frame)
+  {
+      context->stop_next = 1;
+      context->stop_frame = 0;
+  }
+
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
   // rb_funcall(context_object, idAtReturn, 2, path, lineno);
   pop_frame(context_object);
@@ -245,9 +251,11 @@ Debase_setup_tracepoints(VALUE self)
 {	
   tpLine = rb_tracepoint_new(Qnil, RUBY_EVENT_LINE, process_line_event, NULL);
   rb_tracepoint_enable(tpLine);
-  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_B_RETURN, process_return_event, NULL);
+  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_CLASS, 
+                               process_return_event, NULL);
   rb_tracepoint_enable(tpReturn);
-  tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_B_CALL, process_call_event, NULL);
+  tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_B_CALL | RUBY_EVENT_END, 
+                             process_call_event, NULL);
   rb_tracepoint_enable(tpCall);
   return Qnil;
 }

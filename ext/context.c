@@ -149,6 +149,7 @@ context_create(VALUE thread, VALUE cDebugThread) {
   context->flags = 0;
   context->last_file = NULL;
   context->last_line = -1;
+  context->stop_frame = -1;
   reset_stepping_stop_points(context);
   if(rb_obj_class(thread) == cDebugThread) CTX_FL_SET(context, CTX_FL_IGNORE);
   return Data_Wrap_Struct(cContext, Context_mark, Context_free, context);
