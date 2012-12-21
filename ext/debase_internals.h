@@ -4,6 +4,8 @@
 #include <ruby.h>
 #include <ruby/debug.h>
 
+typedef struct rb_trace_arg_struct rb_trace_point_t;
+
 /* Debase::Context */
 /* flags */
 #define CTX_FL_SUSPEND      (1<<1)
@@ -88,5 +90,5 @@ typedef struct
 
 extern VALUE catchpoint_hit_count(VALUE catchpoints, VALUE exception, VALUE *exception_name);
 extern VALUE breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding);
-extern VALUE Init_breakpoint(VALUE mDebase);
+extern void Init_breakpoint(VALUE mDebase);
 #endif

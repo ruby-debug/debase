@@ -206,7 +206,7 @@ breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
   return Qnil;
 }
 
-extern VALUE
+extern void
 Init_breakpoint(VALUE mDebase)
 {
   breakpoint_max = 0;
@@ -217,5 +217,4 @@ Init_breakpoint(VALUE mDebase)
   rb_define_method(cBreakpoint, "source", Breakpoint_source, 0);
   rb_define_method(cBreakpoint, "pos", Breakpoint_pos, 0);
   rb_define_alloc_func(cBreakpoint, Breakpoint_create);
-  return cBreakpoint;
 }

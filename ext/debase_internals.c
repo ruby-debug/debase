@@ -2,7 +2,6 @@
 
 static VALUE mDebase;                 /* Ruby Debase Module object */
 static VALUE cContext;
-static VALUE cBreakpoint;
 static VALUE cDebugThread;
 
 static VALUE locker = Qnil;
@@ -16,16 +15,12 @@ static VALUE idList;
 static VALUE idCurrent;
 static VALUE idContexts;
 static VALUE idAlive;
-static VALUE idPath;
-static VALUE idLineno;
-static VALUE idBinding;
 static VALUE idAtLine;
 static VALUE idAtReturn;
 static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
 static VALUE idBreakpoints;
 static VALUE idCatchpoints;
-static VALUE idSelf;
 
 #define CURRENT_THREAD() (rb_funcall(rb_cThread, idCurrent, 0))
 
@@ -132,10 +127,14 @@ check_start_processing(debug_context_t *context, VALUE thread)
 inline void
 load_frame_info(VALUE trace_point, VALUE *path, VALUE *lineno, VALUE *binding, VALUE *self)
 {
-  *path = rb_funcall(trace_point, idPath, 0);
-  *lineno = rb_funcall(trace_point, idLineno, 0);
-  *binding = rb_funcall(trace_point, idBinding, 0);
-  *self = rb_funcall(trace_point, idSelf, 0);
+  rb_trace_point_t *tp;
+
+  tp = rb_tracearg_from_tracepoint(trace_point);
+
+  *path = rb_tracearg_path(tp);
+  *lineno = rb_tracearg_lineno(tp);
+  *binding = rb_tracearg_binding(tp);
+  *self = rb_tracearg_self(tp);
 }
 
 static void 
@@ -355,19 +354,15 @@ Init_debase_internals()
   idCurrent = rb_intern("current");
   idContexts = rb_intern("@contexts");
   idAlive = rb_intern("alive?");
-  idPath = rb_intern("path");
-  idLineno = rb_intern("lineno");
-  idBinding = rb_intern("binding");
   idAtLine = rb_intern("at_line");
   idAtReturn = rb_intern("at_return");
   idAtBreakpoint = rb_intern("at_breakpoint");
   idAtCatchpoint = rb_intern("at_catchpoint");
   idBreakpoints = rb_intern("@breakpoints");
   idCatchpoints = rb_intern("@catchpoints");
-  idSelf = rb_intern("self");
 
   cContext = Init_context(mDebase);
 
-  cBreakpoint = Init_breakpoint(mDebase);
+  Init_breakpoint(mDebase);
   cDebugThread  = rb_define_class_under(mDebase, "DebugThread", rb_cThread);
 }
