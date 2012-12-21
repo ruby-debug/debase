@@ -23,7 +23,6 @@ static VALUE idAtLine;
 static VALUE idAtReturn;
 static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
-static VALUE idFind;
 static VALUE idBreakpoints;
 static VALUE idCatchpoints;
 static VALUE idSelf;
@@ -192,7 +191,7 @@ process_line_event(VALUE trace_point, void *data)
       context->stop_next = 0;
   }
 
-  breakpoint = rb_funcall(cBreakpoint, idFind, 4, rb_ivar_get(mDebase, idBreakpoints), path, lineno, binding);
+  breakpoint = breakpoint_find(rb_ivar_get(mDebase, idBreakpoints), path, lineno, binding);
   if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
     context->stop_reason = CTX_STOP_STEP;
     if (breakpoint != Qnil) {
@@ -362,14 +361,13 @@ Init_debase_internals()
   idAtLine = rb_intern("at_line");
   idAtReturn = rb_intern("at_return");
   idAtBreakpoint = rb_intern("at_breakpoint");
-  idAtCatchpoint = rb_intern("at_catchpoint");   
-  idFind = rb_intern("find");
+  idAtCatchpoint = rb_intern("at_catchpoint");
   idBreakpoints = rb_intern("@breakpoints");
   idCatchpoints = rb_intern("@catchpoints");
   idSelf = rb_intern("self");
 
   cContext = Init_context(mDebase);
 
-  cBreakpoint = rb_define_class_under(mDebase, "Breakpoint", rb_cObject);
+  cBreakpoint = Init_breakpoint(mDebase);
   cDebugThread  = rb_define_class_under(mDebase, "DebugThread", rb_cThread);
 }

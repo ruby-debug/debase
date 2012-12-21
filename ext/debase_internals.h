@@ -76,5 +76,17 @@ extern void add_to_locked(VALUE thread);
 extern VALUE remove_from_locked();
 
 /* breakpoints and catchpoints */
+/* types */
+typedef struct
+{
+  VALUE enabled;
+  VALUE source;
+  VALUE expr;
+  int line;
+  int id;
+} breakpoint_t;
+
 extern VALUE catchpoint_hit_count(VALUE catchpoints, VALUE exception, VALUE *exception_name);
+extern VALUE breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding);
+extern VALUE Init_breakpoint(VALUE mDebase);
 #endif
