@@ -1,8 +1,6 @@
 require "debase_internals"
 require "debase/version"
 require "debase/context"
-require "debase/catchpoint"
-require "debase/breakpoint"
 
 module Debase
   class << self
@@ -27,7 +25,6 @@ module Debase
       @contexts = {}
       @breakpoints = []
       @catchpoints = {}
-      @breakpoints_count = 0
       @locked = []
       setup_tracepoints
     end
@@ -54,8 +51,7 @@ module Debase
     # @param [Fixnum] line
     # @param [String] expr
     def add_breakpoint(file, line, expr=nil)
-      @breakpoints_count = @breakpoints_count + 1
-      breakpoint = Breakpoint.new(@breakpoints_count, file, line, expr)
+      breakpoint = Breakpoint.new(file, line, expr)
       @breakpoints << breakpoint
       breakpoint
     end
