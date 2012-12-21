@@ -11,9 +11,9 @@ static VALUE idAlive;
 extern void
 reset_stepping_stop_points(debug_context_t *context)
 {
-    context->dest_frame = -1;
-    context->stop_line  = -1;
-    context->stop_next  = -1;
+  context->dest_frame = -1;
+  context->stop_line  = -1;
+  context->stop_next  = -1;
 }
 
 static inline VALUE
@@ -35,7 +35,7 @@ delete_frame(debug_context_t *context)
 }
 
 inline void
-init_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self)
+fill_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self)
 { 
   frame->file = file;
   frame->line = line;
@@ -85,7 +85,7 @@ push_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE self
   Data_Get_Struct(context_object, debug_context_t, context);
 
   frame = ALLOC(debug_frame_t);
-  init_frame(frame, file, line, binding, self);
+  fill_frame(frame, file, line, binding, self);
   frame->prev = context->stack;
   context->stack = frame;
   context->stack_size++;
@@ -112,7 +112,7 @@ update_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE se
   	push_frame(context_object, file, line, binding, self);
     return;
   }
-  init_frame(context->stack, file, line, binding, self);
+  fill_frame(context->stack, file, line, binding, self);
 }
 
 static void 
