@@ -11,8 +11,6 @@ static VALUE tpCall;
 static VALUE tpReturn;
 static VALUE tpRaise;
 
-static VALUE idList;
-static VALUE idCurrent;
 static VALUE idContexts;
 static VALUE idAlive;
 static VALUE idAtLine;
@@ -21,8 +19,6 @@ static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
 static VALUE idBreakpoints;
 static VALUE idCatchpoints;
-
-#define CURRENT_THREAD() (rb_funcall(rb_cThread, idCurrent, 0))
 
 static VALUE
 Debase_thread_context(VALUE self, VALUE thread)
@@ -41,11 +37,8 @@ Debase_thread_context(VALUE self, VALUE thread)
 
 static VALUE
 Debase_current_context(VALUE self)
-{  
-  VALUE current;  
-
-  current = CURRENT_THREAD();
-  return Debase_thread_context(self, current);	
+{
+  return Debase_thread_context(self, rb_thread_current());	
 }
 
 static int
@@ -163,7 +156,7 @@ process_line_event(VALUE trace_point, void *data)
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
-  if (!check_start_processing(context, CURRENT_THREAD())) return;
+  if (!check_start_processing(context, rb_thread_current())) return;
 
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
   file = RSTRING_PTR(path);
@@ -214,7 +207,7 @@ process_return_event(VALUE trace_point, void *data)
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
-  if (!check_start_processing(context, CURRENT_THREAD())) return;
+  if (!check_start_processing(context, rb_thread_current())) return;
 
   if(context->stack_size == context->stop_frame)
   {
@@ -240,7 +233,7 @@ process_call_event(VALUE trace_point, void *data)
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
-  if (!check_start_processing(context, CURRENT_THREAD())) return;
+  if (!check_start_processing(context, rb_thread_current())) return;
   
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
   push_frame(context_object, RSTRING_PTR(path), FIX2INT(lineno), binding, self);
@@ -265,7 +258,7 @@ process_raise_event(VALUE trace_point, void *data)
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
-  if (!check_start_processing(context, CURRENT_THREAD())) return;
+  if (!check_start_processing(context, rb_thread_current())) return;
 
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
   file = RSTRING_PTR(path);
@@ -350,8 +343,6 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "current_context", Debase_current_context, 0);
   rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 2);
 
-  idList = rb_intern("list");
-  idCurrent = rb_intern("current");
   idContexts = rb_intern("@contexts");
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");
