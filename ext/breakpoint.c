@@ -157,13 +157,12 @@ filename_cmp(VALUE source, char *file)
 #ifdef PATH_MAX
   char path[PATH_MAX + 1];    
   path[PATH_MAX] = 0;
-
-  if (realpath(file, path) != NULL)
-    return filename_cmp_impl(source, path);
-  else
-    return filename_cmp_impl(source, file);
+  return filename_cmp_impl(source, realpath(file, path) != NULL ? path : file);
 #else
-  char *path = realpath(file, NULL);
+  char *path;
+  int result;
+  
+  path = realpath(file, NULL);
   result = filename_cmp_impl(source, path == NULL ? file : path);
   free(path);
   return result;

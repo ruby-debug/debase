@@ -1,5 +1,7 @@
 #include <debase_internals.h>
 
+#define CONTEXTS_CLEANUP_THRESHOLD (42 * 42)
+
 static VALUE mDebase;                 /* Ruby Debase Module object */
 static VALUE cContext;
 static VALUE cDebugThread;
@@ -19,6 +21,9 @@ static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
 static VALUE idBreakpoints;
 static VALUE idCatchpoints;
+
+static int event_count;
+static int cleanup_event_count;
 
 static VALUE
 Debase_thread_context(VALUE self, VALUE thread)
@@ -44,7 +49,7 @@ Debase_current_context(VALUE self)
 static int
 remove_dead_threads(VALUE thread, VALUE context, VALUE ignored)
 {
-  return IS_THREAD_ALIVE(thread) ? ST_CONTINUE : ST_DELETE;
+  return (IS_THREAD_ALIVE(thread)) ? ST_CONTINUE : ST_DELETE;
 }
 
 static void
@@ -64,7 +69,11 @@ cleanup(debug_context_t *context)
   context->stop_reason = CTX_STOP_NONE;
 
   /* check that all contexts point to alive threads */
-  cleanup_contexts();
+  if (event_count - cleanup_event_count > CONTEXTS_CLEANUP_THRESHOLD)
+  {
+    cleanup_event_count = event_count;
+    cleanup_contexts();
+  }
 
   /* release a lock */
   locker = Qnil;
@@ -114,6 +123,7 @@ check_start_processing(debug_context_t *context, VALUE thread)
     cleanup(context);
     return 0;
   }
+  event_count++;
   return 1;
 }
 
@@ -318,7 +328,7 @@ Debase_prepare_context(VALUE self, VALUE file, VALUE stop)
   VALUE context_object;
   debug_context_t *context;
 
-  context_object = Debase_current_context(mDebase);
+  context_object = Debase_current_context(self);
   Data_Get_Struct(context_object, debug_context_t, context);
 
   if(RTEST(stop)) context->stop_next = 1;
@@ -353,7 +363,8 @@ Init_debase_internals()
   idCatchpoints = rb_intern("@catchpoints");
 
   cContext = Init_context(mDebase);
-
   Init_breakpoint(mDebase);
   cDebugThread  = rb_define_class_under(mDebase, "DebugThread", rb_cThread);
+  event_count = 0;
+  cleanup_event_count = 0;
 }
