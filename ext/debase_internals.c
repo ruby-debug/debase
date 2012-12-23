@@ -7,20 +7,19 @@ static VALUE cContext;
 static VALUE cDebugThread;
 
 static VALUE locker = Qnil;
+static VALUE contexts;
+static VALUE catchpoints;
+static VALUE breakpoints;
 
 static VALUE tpLine;
 static VALUE tpCall;
 static VALUE tpReturn;
 static VALUE tpRaise;
 
-static VALUE idContexts;
 static VALUE idAlive;
 static VALUE idAtLine;
-static VALUE idAtReturn;
 static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
-static VALUE idBreakpoints;
-static VALUE idCatchpoints;
 
 static int event_count;
 static int cleanup_event_count;
@@ -28,10 +27,8 @@ static int cleanup_event_count;
 static VALUE
 Debase_thread_context(VALUE self, VALUE thread)
 {
-  VALUE contexts;
   VALUE context;
 
-  contexts = rb_ivar_get(self, idContexts);
   context = rb_hash_aref(contexts, thread);
   if (context == Qnil) {
     context = context_create(thread, cDebugThread);
@@ -52,15 +49,6 @@ remove_dead_threads(VALUE thread, VALUE context, VALUE ignored)
   return (IS_THREAD_ALIVE(thread)) ? ST_CONTINUE : ST_DELETE;
 }
 
-static void
-cleanup_contexts()
-{
-  VALUE contexts;
-
-  contexts = rb_ivar_get(mDebase, idContexts);
-  rb_hash_foreach(contexts, remove_dead_threads, 0);
-}
-
 static void 
 cleanup(debug_context_t *context)
 {
@@ -72,7 +60,7 @@ cleanup(debug_context_t *context)
   if (event_count - cleanup_event_count > CONTEXTS_CLEANUP_THRESHOLD)
   {
     cleanup_event_count = event_count;
-    cleanup_contexts();
+    rb_hash_foreach(contexts, remove_dead_threads, 0);
   }
 
   /* release a lock */
@@ -193,7 +181,7 @@ process_line_event(VALUE trace_point, void *data)
       context->stop_next = 0;
   }
 
-  breakpoint = breakpoint_find(rb_ivar_get(mDebase, idBreakpoints), path, lineno, binding);
+  breakpoint = breakpoint_find(breakpoints, path, lineno, binding);
   if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
     context->stop_reason = CTX_STOP_STEP;
     if (breakpoint != Qnil) {
@@ -258,7 +246,6 @@ process_raise_event(VALUE trace_point, void *data)
   VALUE binding;
   VALUE self;
   VALUE context_object;
-  VALUE catchpoints;
   VALUE hit_count;
   VALUE exception_name;
   debug_context_t *context;
@@ -274,7 +261,6 @@ process_raise_event(VALUE trace_point, void *data)
   file = RSTRING_PTR(path);
   line = FIX2INT(lineno);
   update_frame(context_object, file, line, binding, self);
-  catchpoints = rb_ivar_get(mDebase, idCatchpoints);
 
   if (catchpoint_hit_count(catchpoints, rb_errinfo(), &exception_name) != Qnil) {
     /* On 64-bit systems with gcc and -O2 there seems to be
@@ -295,6 +281,10 @@ process_raise_event(VALUE trace_point, void *data)
 static VALUE
 Debase_setup_tracepoints(VALUE self)
 {	
+  contexts = rb_hash_new();
+  breakpoints = rb_ary_new();
+  catchpoints = rb_hash_new();
+
   tpLine = rb_tracepoint_new(Qnil, RUBY_EVENT_LINE, process_line_event, NULL);
   rb_tracepoint_enable(tpLine);
   tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_CLASS, 
@@ -311,6 +301,10 @@ Debase_setup_tracepoints(VALUE self)
 static VALUE
 Debase_remove_tracepoints(VALUE self)
 { 
+  contexts = Qnil;
+  breakpoints = Qnil;
+  catchpoints = Qnil;
+
   if (tpLine != Qnil) rb_tracepoint_disable(tpLine);
   tpLine = Qnil;
   if (tpReturn != Qnil) rb_tracepoint_disable(tpReturn);
@@ -336,6 +330,41 @@ Debase_prepare_context(VALUE self, VALUE file, VALUE stop)
   return self;
 }
 
+static int
+values_i(VALUE key, VALUE value, VALUE ary)
+{
+    rb_ary_push(ary, value);
+    return ST_CONTINUE;
+}
+
+static VALUE
+Debase_contexts(VALUE self)
+{
+  VALUE ary;
+
+  ary = rb_ary_new();
+  rb_hash_foreach(contexts, values_i, ary);
+
+  return ary;
+}
+
+static VALUE
+Debase_breakpoints(VALUE self)
+{
+  return breakpoints;
+}
+
+static VALUE
+Debase_catchpoints(VALUE self)
+{
+  return catchpoints; 
+}
+
+static VALUE
+Debase_started(VALUE self)
+{
+  return catchpoints != Qnil ? Qtrue : Qfalse; 
+}
 /*
  *   Document-class: Debase
  *
@@ -352,19 +381,27 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "remove_tracepoints", Debase_remove_tracepoints, 0);
   rb_define_module_function(mDebase, "current_context", Debase_current_context, 0);
   rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 2);
+  rb_define_module_function(mDebase, "contexts", Debase_contexts, 0);
+  rb_define_module_function(mDebase, "breakpoints", Debase_breakpoints, 0);
+  rb_define_module_function(mDebase, "catchpoints", Debase_catchpoints, 0);
+  rb_define_module_function(mDebase, "started?", Debase_started, 0);
 
-  idContexts = rb_intern("@contexts");
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");
-  idAtReturn = rb_intern("at_return");
   idAtBreakpoint = rb_intern("at_breakpoint");
   idAtCatchpoint = rb_intern("at_catchpoint");
-  idBreakpoints = rb_intern("@breakpoints");
-  idCatchpoints = rb_intern("@catchpoints");
 
   cContext = Init_context(mDebase);
   Init_breakpoint(mDebase);
   cDebugThread  = rb_define_class_under(mDebase, "DebugThread", rb_cThread);
   event_count = 0;
   cleanup_event_count = 0;
+  contexts = Qnil;
+  catchpoints = Qnil;
+  breakpoints = Qnil;
+
+  rb_global_variable(&locker);
+  rb_global_variable(&breakpoints);
+  rb_global_variable(&catchpoints);
+  rb_global_variable(&contexts);
 }

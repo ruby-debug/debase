@@ -4,15 +4,10 @@ require "debase/context"
 
 module Debase
   class << self
-    attr_reader :breakpoints
     attr_accessor :handler
 
     # possibly deprecated options
     attr_accessor :keep_frame_binding, :tracing
-
-    def started?
-     !!@contexts
-    end
 
     def start(options={}, &block)
       Debugger.const_set('ARGV', ARGV.clone) unless defined? Debugger::ARGV
@@ -22,18 +17,11 @@ module Debase
     end
 
     def start_
-      @contexts = {}
-      @breakpoints = []
-      @catchpoints = {}
-      @locked = []
       setup_tracepoints
     end
 
     def stop
       remove_tracepoints
-      @contexts = nil
-      @breakpoints = nil
-      @catchpoints = nil
     end
 
     def debug_load(file, stop = false, increment_start = false)
@@ -70,31 +58,8 @@ module Debase
       false
     end
 
-    def contexts
-      @contexts.values
-    end
-
-    def catchpoints
-      check_started
-      @catchpoints
-    end
-
     def add_catchpoint(exception)
       @catchpoints[exception] = 0
-    end
-
-    private
-    def check_started
-      raise RuntimeError.new unless started?
-    end
-
-    def check_not_started
-      raise RuntimeError.new if started?
-    end
-
-    def starts_with?(what, prefix)
-      prefix = prefix.to_s
-      what[0, prefix.length] == prefix
     end
   end
   

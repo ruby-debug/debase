@@ -17,7 +17,7 @@ module Debase
     end
 
     def handler
-      Debase.handler or raise "No interface loaded, frame: #{frame_file}:#{frame_line}"
+      Debase.handler or raise "No interface loaded"
     end
 
     def at_breakpoint(breakpoint)
