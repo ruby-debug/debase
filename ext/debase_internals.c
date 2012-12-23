@@ -21,9 +21,6 @@ static VALUE idAtLine;
 static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
 
-static int event_count;
-static int cleanup_event_count;
-
 static VALUE
 Debase_thread_context(VALUE self, VALUE thread)
 {
@@ -55,13 +52,6 @@ cleanup(debug_context_t *context)
   VALUE thread;
 
   context->stop_reason = CTX_STOP_NONE;
-
-  /* check that all contexts point to alive threads */
-  if (event_count - cleanup_event_count > CONTEXTS_CLEANUP_THRESHOLD)
-  {
-    cleanup_event_count = event_count;
-    rb_hash_foreach(contexts, remove_dead_threads, 0);
-  }
 
   /* release a lock */
   locker = Qnil;
@@ -111,7 +101,6 @@ check_start_processing(debug_context_t *context, VALUE thread)
     cleanup(context);
     return 0;
   }
-  event_count++;
   return 1;
 }
 
@@ -343,6 +332,9 @@ Debase_contexts(VALUE self)
   VALUE ary;
 
   ary = rb_ary_new();
+  /* check that all contexts point to alive threads */
+  rb_hash_foreach(contexts, remove_dead_threads, 0);
+ 
   rb_hash_foreach(contexts, values_i, ary);
 
   return ary;
@@ -394,8 +386,6 @@ Init_debase_internals()
   cContext = Init_context(mDebase);
   Init_breakpoint(mDebase);
   cDebugThread  = rb_define_class_under(mDebase, "DebugThread", rb_cThread);
-  event_count = 0;
-  cleanup_event_count = 0;
   contexts = Qnil;
   catchpoints = Qnil;
   breakpoints = Qnil;
