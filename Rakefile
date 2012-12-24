@@ -1,7 +1,7 @@
-require "bundler/gem_tasks"
+require 'bundler/gem_tasks'
 require 'rake/testtask'
 
-BASE_TEST_FILE_LIST = Dir['test/**/*_test.rb']
+BASE_TEST_FILE_LIST = Dir['test/**/test_*.rb']
 
 desc "Remove built files"
 task :clean do
@@ -24,12 +24,11 @@ task :lib => :clean do
 end
 
 desc "Test debase."
-task :test => :lib do 
-  Rake::TestTask.new(:test_base) do |t|
-    t.libs += ['./ext/debase_internals', './lib']
+Rake::TestTask.new(:test) do |t|
+    t.libs += ['./ext', './lib']
     t.test_files = FileList[BASE_TEST_FILE_LIST]
     t.verbose = true
   end
-end
+task :test => :lib
 
 task :default => :test
