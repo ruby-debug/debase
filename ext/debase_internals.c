@@ -300,7 +300,7 @@ Debase_remove_tracepoints(VALUE self)
   tpReturn = Qnil;
   if (tpCall != Qnil) rb_tracepoint_disable(tpCall);
   tpCall = Qnil;
-  if (tpCall != Qnil) rb_tracepoint_disable(tpRaise);
+  if (tpRaise != Qnil) rb_tracepoint_disable(tpRaise);
   tpRaise = Qnil;
   return Qnil;
 }
