@@ -161,7 +161,6 @@ filename_cmp(VALUE source, char *file)
 #else
   char *path;
   int result;
-
   path = realpath(file, NULL);
   result = filename_cmp_impl(source, path == NULL ? file : path);
   free(path);
@@ -190,13 +189,16 @@ extern VALUE
 breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
 {
   VALUE breakpoint_object;
+  char *file;
+  int line;
   int i;
 
+  file = RSTRING_PTR(source);
   line = FIX2INT(pos);
   for(i = 0; i < RARRAY_LEN(breakpoints); i++)
   {
     breakpoint_object = rb_ary_entry(breakpoints, i);
-    if (check_breakpoint_by_pos(breakpoint_object, RSTRING_PTR(source), FIX2INT(pos)))
+    if (check_breakpoint_by_pos(breakpoint_object, file, line))
     {
       return breakpoint_object;
     }
