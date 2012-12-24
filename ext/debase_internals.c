@@ -150,7 +150,7 @@ process_line_event(VALUE trace_point, void *data)
   update_frame(context_object, file, line, binding, self);
 
   if (debug == Qtrue)
-    fprintf(stderr, "line: file=%s, line=%d\n", file, line);
+    fprintf(stderr, "line: file=%s, line=%d, stack_size=%d\n", file, line, context->stack_size);
 
   moved = context->last_line != line || context->last_file == NULL ||
           strcmp(context->last_file, file) != 0;
@@ -206,7 +206,7 @@ process_return_event(VALUE trace_point, void *data)
 
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
   if (debug == Qtrue)
-    fprintf(stderr, "return: file=%s, line=%d\n", RSTRING_PTR(path), FIX2INT(lineno));
+    fprintf(stderr, "return: file=%s, line=%d, stack_size=%d\n", RSTRING_PTR(path), FIX2INT(lineno), context->stack_size);
   // rb_funcall(context_object, idAtReturn, 2, path, lineno);
   pop_frame(context_object);
   cleanup(context);
@@ -228,7 +228,7 @@ process_call_event(VALUE trace_point, void *data)
   
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
   if (debug == Qtrue)
-    fprintf(stderr, "call: file=%s, line=%d\n", RSTRING_PTR(path), FIX2INT(lineno));
+    fprintf(stderr, "call: file=%s, line=%d, stack_size=%d\n", RSTRING_PTR(path), FIX2INT(lineno), context->stack_size);
   push_frame(context_object, RSTRING_PTR(path), FIX2INT(lineno), binding, self);
   cleanup(context);
 }
@@ -276,6 +276,7 @@ process_raise_event(VALUE trace_point, void *data)
 static VALUE
 Debase_setup_tracepoints(VALUE self)
 {	
+  if (catchpoints != Qnil) return Qnil;
   contexts = rb_hash_new();
   breakpoints = rb_ary_new();
   catchpoints = rb_hash_new();
@@ -312,7 +313,7 @@ Debase_remove_tracepoints(VALUE self)
 }
 
 static VALUE
-Debase_prepare_context(VALUE self, VALUE file, VALUE stop)
+debase_prepare_context(VALUE self, VALUE file, VALUE stop)
 {
   VALUE context_object;
   debug_context_t *context;
@@ -323,6 +324,27 @@ Debase_prepare_context(VALUE self, VALUE file, VALUE stop)
   if(RTEST(stop)) context->stop_next = 1;
   ruby_script(RSTRING_PTR(file));
   return self;
+}
+
+static VALUE
+Debase_debug_load(int argc, VALUE *argv, VALUE self)
+{
+  VALUE file, stop, increment_start;
+  int state;
+
+  if(rb_scan_args(argc, argv, "12", &file, &stop, &increment_start) == 1) 
+  {
+      stop = Qfalse;
+      increment_start = Qtrue;
+  }
+  Debase_setup_tracepoints(self);
+  debase_prepare_context(self, file, stop);
+  rb_load_protect(file, 0, &state);
+  if (0 != state) 
+  {
+      return rb_errinfo();
+  }
+  return Qnil;
 }
 
 static int
@@ -380,7 +402,7 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "setup_tracepoints", Debase_setup_tracepoints, 0);
   rb_define_module_function(mDebase, "remove_tracepoints", Debase_remove_tracepoints, 0);
   rb_define_module_function(mDebase, "current_context", Debase_current_context, 0);
-  rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 2);
+  rb_define_module_function(mDebase, "debug_load", Debase_debug_load, -1);
   rb_define_module_function(mDebase, "contexts", Debase_contexts, 0);
   rb_define_module_function(mDebase, "breakpoints", Debase_breakpoints, 0);
   rb_define_module_function(mDebase, "catchpoints", Debase_catchpoints, 0);

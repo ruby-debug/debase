@@ -16,25 +16,6 @@ module Debase
       return Debugger.started? ? block && block.call(self) : Debugger.start_(&block) 
     end
 
-    def start_
-      setup_tracepoints
-    end
-
-    def stop
-      remove_tracepoints
-    end
-
-    def debug_load(file, stop = false, increment_start = false)
-      begin
-        start
-        prepare_context(file, stop)
-        load file
-        return nil
-      rescue Exception => e
-        return e
-      end
-    end
-
     # @param [String] file
     # @param [Fixnum] line
     # @param [String] expr
