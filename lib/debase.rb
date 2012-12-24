@@ -40,12 +40,12 @@ module Debase
     # @param [String] expr
     def add_breakpoint(file, line, expr=nil)
       breakpoint = Breakpoint.new(file, line, expr)
-      @breakpoints << breakpoint
+      breakpoints << breakpoint
       breakpoint
     end
 
     def remove_breakpoint(id)
-      Breakpoint.remove @breakpoints, id
+      Breakpoint.remove breakpoints, id
     end
 
     def source_reload; {} end
@@ -59,7 +59,7 @@ module Debase
     end
 
     def add_catchpoint(exception)
-      @catchpoints[exception] = 0
+      catchpoints[exception] = 0
     end
   end
   

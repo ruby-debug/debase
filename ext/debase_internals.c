@@ -1,11 +1,10 @@
 #include <debase_internals.h>
 
-#define CONTEXTS_CLEANUP_THRESHOLD (42 * 42)
-
 static VALUE mDebase;                 /* Ruby Debase Module object */
 static VALUE cContext;
 static VALUE cDebugThread;
 
+static VALUE debug = Qfalse;
 static VALUE locker = Qnil;
 static VALUE contexts;
 static VALUE catchpoints;
@@ -150,6 +149,9 @@ process_line_event(VALUE trace_point, void *data)
   line = FIX2INT(lineno);
   update_frame(context_object, file, line, binding, self);
 
+  if (debug == Qtrue)
+    fprintf(stderr, "line: file=%s, line=%d\n", file, line);
+
   moved = context->last_line != line || context->last_file == NULL ||
           strcmp(context->last_file, file) != 0;
 
@@ -203,6 +205,8 @@ process_return_event(VALUE trace_point, void *data)
   }
 
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
+  if (debug == Qtrue)
+    fprintf(stderr, "return: file=%s, line=%d\n", RSTRING_PTR(path), FIX2INT(lineno));
   // rb_funcall(context_object, idAtReturn, 2, path, lineno);
   pop_frame(context_object);
   cleanup(context);
@@ -223,6 +227,8 @@ process_call_event(VALUE trace_point, void *data)
   if (!check_start_processing(context, rb_thread_current())) return;
   
   load_frame_info(trace_point, &path, &lineno, &binding, &self);
+  if (debug == Qtrue)
+    fprintf(stderr, "call: file=%s, line=%d\n", RSTRING_PTR(path), FIX2INT(lineno));
   push_frame(context_object, RSTRING_PTR(path), FIX2INT(lineno), binding, self);
   cleanup(context);
 }
@@ -349,6 +355,8 @@ Debase_breakpoints(VALUE self)
 static VALUE
 Debase_catchpoints(VALUE self)
 {
+  if (catchpoints == Qnil)
+    rb_raise(rb_eRuntimeError, "Debugger.start is not called yet.");
   return catchpoints; 
 }
 

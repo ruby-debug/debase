@@ -67,7 +67,7 @@ class TestRubyDebug < Test::Unit::TestCase
     Debugger.remove_breakpoint(0)
     assert_equal(1, Debugger.breakpoints.size,
                  'There should still be one breakpoint set.')
-    Debugger.remove_breakpoint(1)
+    Debugger.remove_breakpoint(brk.id)
     assert_equal(0, Debugger.breakpoints.size,
                  'There should no longer be any breakpoints set.')
   ensure

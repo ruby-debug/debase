@@ -75,6 +75,8 @@ Breakpoint_remove(VALUE self, VALUE breakpoints, VALUE id_value)
   VALUE breakpoint_object;
   breakpoint_t *breakpoint;
 
+  if (breakpoints == Qnil) return Qnil;
+
   id = FIX2INT(id_value);
 
   for(i = 0; i < RARRAY_LEN(breakpoints); i++)
@@ -185,6 +187,12 @@ check_breakpoint_by_pos(VALUE breakpoint_object, char *file, int line)
     return 0;
 }
 
+static VALUE
+Breakpoint_find(VALUE self, VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
+{
+  return breakpoint_find(breakpoints, source, pos, binding);
+}
+
 extern VALUE
 breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
 {
@@ -211,6 +219,7 @@ Init_breakpoint(VALUE mDebase)
 {
   breakpoint_max = 0;
   cBreakpoint = rb_define_class_under(mDebase, "Breakpoint", rb_cObject);
+  rb_define_singleton_method(cBreakpoint, "find", Breakpoint_find, 4);
   rb_define_singleton_method(cBreakpoint, "remove", Breakpoint_remove, 2);
   rb_define_method(cBreakpoint, "initialize", Breakpoint_initialize, 3);
   rb_define_method(cBreakpoint, "id", Breakpoint_id, 0);
