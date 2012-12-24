@@ -1,0 +1,4 @@
+language: ruby
+rvm:
+  - ruby-head
+  - 2.0.0

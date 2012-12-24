@@ -16,7 +16,7 @@ task :clean do
 end
 
 desc "Create the core debase shared library extension"
-task :lib  do
+task :lib => :clean do
   Dir.chdir("ext") do
     system("#{Gem.ruby} extconf.rb && make")
     exit $?.to_i if $?.to_i != 0
@@ -32,4 +32,4 @@ task :test => :lib do
   end
 end
 
-
+task :default => :test
