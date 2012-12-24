@@ -161,7 +161,7 @@ filename_cmp(VALUE source, char *file)
 #else
   char *path;
   int result;
-  
+
   path = realpath(file, NULL);
   result = filename_cmp_impl(source, path == NULL ? file : path);
   free(path);
@@ -190,7 +190,6 @@ extern VALUE
 breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
 {
   VALUE breakpoint_object;
-  int line;
   int i;
 
   line = FIX2INT(pos);
