@@ -1,5 +1,9 @@
 #include <debase_internals.h>
 
+#ifdef _WIN32
+#include <ctype.h>
+#endif
+
 #if defined DOSISH
 #define isdirsep(x) ((x) == '/' || (x) == '\\')
 #else
