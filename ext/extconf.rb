@@ -8,6 +8,7 @@ config_file = File.join(File.dirname(__FILE__), 'config_options.rb')
 load config_file if File.exist?(config_file)
 
 $CFLAGS='-Wall -Werror'
+$CFLAGS+=' -g3' if ENV['debug']  
 
 dir_config("ruby")
 create_makefile("debase_internals")
