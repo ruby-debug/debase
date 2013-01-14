@@ -6,6 +6,9 @@ module Debase
   class << self
     attr_accessor :handler
 
+    alias start_ setup_tracepoints
+    alias stop remove_tracepoints
+
     # possibly deprecated options
     attr_accessor :keep_frame_binding, :tracing
 
