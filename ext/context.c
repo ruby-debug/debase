@@ -23,7 +23,7 @@ Context_thnum(VALUE self) {
   return INT2FIX(context->thnum);
 }
 
-inline void
+static inline void
 delete_frame(debug_context_t *context)
 {
   debug_frame_t *frame;
@@ -34,7 +34,7 @@ delete_frame(debug_context_t *context)
   xfree(frame);
 }
 
-inline void
+static inline void
 fill_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self)
 { 
   frame->file = file;
@@ -43,7 +43,7 @@ fill_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self
   frame->self = self;  
 }
 
-inline static VALUE 
+static inline VALUE 
 Context_stack_size(VALUE self) 
 {
   debug_context_t *context;
@@ -51,7 +51,7 @@ Context_stack_size(VALUE self)
   return INT2FIX(context->stack_size);
 }
 
-inline static VALUE 
+static inline VALUE 
 Context_thread(VALUE self) 
 {
   debug_context_t *context;
@@ -59,7 +59,7 @@ Context_thread(VALUE self)
   return context->thread;
 }
 
-inline static VALUE 
+static inline VALUE 
 Context_dead(VALUE self) 
 {
   debug_context_t *context;

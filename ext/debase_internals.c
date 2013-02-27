@@ -103,7 +103,7 @@ check_start_processing(debug_context_t *context, VALUE thread)
   return 1;
 }
 
-inline void
+static inline void
 load_frame_info(VALUE trace_point, VALUE *path, VALUE *lineno, VALUE *binding, VALUE *self)
 {
   rb_trace_point_t *tp;
