@@ -176,6 +176,7 @@ process_line_event(VALUE trace_point, void *data)
   if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
     context->stop_reason = CTX_STOP_STEP;
     if (breakpoint != Qnil) {
+      context->stop_reason = CTX_STOP_BREAKPOINT;
       rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
     }
     reset_stepping_stop_points(context);
