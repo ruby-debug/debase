@@ -104,15 +104,10 @@ check_start_processing(debug_context_t *context, VALUE thread)
 }
 
 static inline void
-load_frame_info(VALUE trace_point, VALUE *path, VALUE *lineno, VALUE *binding, VALUE *self)
-{
-  rb_trace_point_t *tp;
-
-  tp = rb_tracearg_from_tracepoint(trace_point);
-
+load_frame_info(rb_trace_point_t *tp, VALUE *path, VALUE *lineno, VALUE *self)
+{  
   *path = rb_tracearg_path(tp);
   *lineno = rb_tracearg_lineno(tp);
-  *binding = rb_tracearg_binding(tp);
   *self = rb_tracearg_self(tp);
 }
 
@@ -136,6 +131,7 @@ process_line_event(VALUE trace_point, void *data)
   VALUE context_object;
   VALUE breakpoint;
   debug_context_t *context;
+  rb_trace_point_t *tp;
   char *file;
   int line;
   int moved;
@@ -144,7 +140,9 @@ process_line_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
-  load_frame_info(trace_point, &path, &lineno, &binding, &self);
+  tp = TRACE_POINT;
+  load_frame_info(tp, &path, &lineno, &self);
+  binding = Qnil;
   file = RSTRING_PTR(path);
   line = FIX2INT(lineno);
   update_frame(context_object, file, line, binding, self);
@@ -172,10 +170,12 @@ process_line_event(VALUE trace_point, void *data)
       context->stop_next = 0;
   }
 
-  breakpoint = breakpoint_find(breakpoints, path, lineno, binding);
+  breakpoint = breakpoint_find(breakpoints, path, lineno);
   if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
     context->stop_reason = CTX_STOP_STEP;
     if (breakpoint != Qnil) {
+      binding = rb_tracearg_binding(tp);
+      update_frame(context_object, file, line, binding, self);
       context->stop_reason = CTX_STOP_BREAKPOINT;
       rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
     }
@@ -190,7 +190,6 @@ process_return_event(VALUE trace_point, void *data)
 {
   VALUE path;
   VALUE lineno;
-  VALUE binding;
   VALUE self;
   VALUE context_object;
   debug_context_t *context;
@@ -205,7 +204,7 @@ process_return_event(VALUE trace_point, void *data)
       context->stop_frame = 0;
   }
 
-  load_frame_info(trace_point, &path, &lineno, &binding, &self);
+  load_frame_info(TRACE_POINT, &path, &lineno, &self);
   if (debug == Qtrue)
     fprintf(stderr, "return: file=%s, line=%d, stack_size=%d\n", RSTRING_PTR(path), FIX2INT(lineno), context->stack_size);
   // rb_funcall(context_object, idAtReturn, 2, path, lineno);
@@ -221,13 +220,16 @@ process_call_event(VALUE trace_point, void *data)
   VALUE binding;
   VALUE self;
   VALUE context_object;
+  rb_trace_point_t* tp;
   debug_context_t *context;
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
   
-  load_frame_info(trace_point, &path, &lineno, &binding, &self);
+  tp = TRACE_POINT;
+  load_frame_info(tp, &path, &lineno, &self);
+  binding = rb_tracearg_binding(tp);
   if (debug == Qtrue)
     fprintf(stderr, "call: file=%s, line=%d, stack_size=%d\n", RSTRING_PTR(path), FIX2INT(lineno), context->stack_size);
   push_frame(context_object, RSTRING_PTR(path), FIX2INT(lineno), binding, self);
@@ -245,6 +247,7 @@ process_raise_event(VALUE trace_point, void *data)
   VALUE hit_count;
   VALUE exception_name;
   debug_context_t *context;
+  rb_trace_point_t *tp;
   char *file;
   int line;
   int c_hit_count;
@@ -253,7 +256,9 @@ process_raise_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
-  load_frame_info(trace_point, &path, &lineno, &binding, &self);
+  tp = TRACE_POINT;
+  load_frame_info(tp, &path, &lineno, &self);
+  binding = rb_tracearg_binding(tp);
   file = RSTRING_PTR(path);
   line = FIX2INT(lineno);
   update_frame(context_object, file, line, binding, self);

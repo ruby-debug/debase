@@ -192,13 +192,13 @@ check_breakpoint_by_pos(VALUE breakpoint_object, char *file, int line)
 }
 
 static VALUE
-Breakpoint_find(VALUE self, VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
+Breakpoint_find(VALUE self, VALUE breakpoints, VALUE source, VALUE pos)
 {
-  return breakpoint_find(breakpoints, source, pos, binding);
+  return breakpoint_find(breakpoints, source, pos);
 }
 
 extern VALUE
-breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
+breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos)
 {
   VALUE breakpoint_object;
   char *file;
@@ -223,7 +223,7 @@ Init_breakpoint(VALUE mDebase)
 {
   breakpoint_max = 0;
   cBreakpoint = rb_define_class_under(mDebase, "Breakpoint", rb_cObject);
-  rb_define_singleton_method(cBreakpoint, "find", Breakpoint_find, 4);
+  rb_define_singleton_method(cBreakpoint, "find", Breakpoint_find, 3);
   rb_define_singleton_method(cBreakpoint, "remove", Breakpoint_remove, 2);
   rb_define_method(cBreakpoint, "initialize", Breakpoint_initialize, 3);
   rb_define_method(cBreakpoint, "id", Breakpoint_id, 0);

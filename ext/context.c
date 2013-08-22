@@ -39,7 +39,7 @@ fill_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self
 { 
   frame->file = file;
   frame->line = line;
-  frame->binding = binding;
+  frame->binding = binding != Qnil ? binding : frame->binding;
   frame->self = self;  
 }
 
@@ -85,6 +85,7 @@ push_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE self
   Data_Get_Struct(context_object, debug_context_t, context);
 
   frame = ALLOC(debug_frame_t);
+  frame->binding = Qnil;
   fill_frame(frame, file, line, binding, self);
   frame->prev = context->stack;
   context->stack = frame;

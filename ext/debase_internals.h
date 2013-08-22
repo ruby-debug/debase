@@ -25,6 +25,7 @@ typedef struct rb_trace_arg_struct rb_trace_point_t;
 #define CTX_FL_UNSET(c,f) do { (c)->flags &= ~(f); } while (0)
 
 #define IS_THREAD_ALIVE(t) (rb_funcall((t), idAlive, 0) == Qtrue)
+#define TRACE_POINT (rb_tracearg_from_tracepoint(trace_point))
 
 /* types */
 typedef enum {CTX_STOP_NONE, CTX_STOP_STEP, CTX_STOP_BREAKPOINT, CTX_STOP_CATCHPOINT} ctx_stop_reason;
@@ -89,6 +90,6 @@ typedef struct
 } breakpoint_t;
 
 extern VALUE catchpoint_hit_count(VALUE catchpoints, VALUE exception, VALUE *exception_name);
-extern VALUE breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding);
+extern VALUE breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos);
 extern void Init_breakpoint(VALUE mDebase);
 #endif
