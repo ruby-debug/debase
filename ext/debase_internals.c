@@ -104,21 +104,65 @@ check_start_processing(debug_context_t *context, VALUE thread)
 }
 
 static inline void
-load_frame_info(rb_trace_point_t *tp, VALUE *path, VALUE *lineno, VALUE *self)
+print_event(VALUE trace_point, debug_context_t *context)
 {  
-  *path = rb_tracearg_path(tp);
-  *lineno = rb_tracearg_lineno(tp);
-  *self = rb_tracearg_self(tp);
+  rb_trace_point_t *tp;
+  VALUE path;
+  VALUE line;
+  VALUE event;
+  VALUE mid;
+
+  if (debug == Qtrue) {
+    tp = TRACE_POINT;
+    path = rb_tracearg_path(tp);
+    line = rb_tracearg_lineno(tp);
+    event = rb_tracearg_event(tp);
+    mid = rb_tracearg_method_id(tp);
+    fprintf(stderr, "%s: file=%s, line=%d, mid=%s\n", rb_id2name(SYM2ID(event)), RSTRING_PTR(path), FIX2INT(line), rb_id2name(SYM2ID(mid)));
+  }
+}
+
+static VALUE
+fill_stack_and_invoke(const rb_debug_inspector_t *inspector, void *_data)
+{
+  inspector_data_t *data;
+
+  data = (inspector_data_t *)_data;
+  fill_stack(data->context, inspector);
+
+  return rb_funcall(data->context_object, idAtLine, 2, data->path, data->lineno);
+}
+
+static VALUE
+start_inspector(inspector_data_t *data)
+{
+    return rb_debug_inspector_open(fill_stack_and_invoke, data);
+}
+
+static VALUE
+stop_inspector(inspector_data_t *data)
+{
+    data->context->stack_size = 0;
+    xfree(data->context->stack);
+    data->context->stack = NULL;
+    return Qnil;
 }
 
 static void 
 call_at_line(debug_context_t *context, char *file, int line, VALUE context_object, VALUE path, VALUE lineno)
 {
+  inspector_data_t data;
+
+  data.context = context;
+  data.context_object = context_object;
+  data.path = path;
+  data.lineno = lineno;
+
   CTX_FL_UNSET(context, CTX_FL_STEPPED);
   CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
   context->last_file = file;
   context->last_line = line;
-  rb_funcall(context_object, idAtLine, 2, path, lineno);
+  rb_ensure(start_inspector, (VALUE)&data, stop_inspector, (VALUE)&data);
 }
 
 static void
@@ -126,8 +170,6 @@ process_line_event(VALUE trace_point, void *data)
 {
   VALUE path;
   VALUE lineno;
-  VALUE binding;
-  VALUE self;
   VALUE context_object;
   VALUE breakpoint;
   debug_context_t *context;
@@ -141,14 +183,12 @@ process_line_event(VALUE trace_point, void *data)
   if (!check_start_processing(context, rb_thread_current())) return;
 
   tp = TRACE_POINT;
-  load_frame_info(tp, &path, &lineno, &self);
-  binding = Qnil;
+  path = rb_tracearg_path(tp);
+  lineno = rb_tracearg_lineno(tp);
   file = RSTRING_PTR(path);
   line = FIX2INT(lineno);
-  update_frame(context_object, file, line, binding, self);
 
-  if (debug == Qtrue)
-    fprintf(stderr, "line: file=%s, line=%d, stack_size=%d\n", file, line, context->stack_size);
+  print_event(trace_point, context);
 
   moved = context->last_line != line || context->last_file == NULL ||
           strcmp(context->last_file, file) != 0;
@@ -174,8 +214,6 @@ process_line_event(VALUE trace_point, void *data)
   if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
     context->stop_reason = CTX_STOP_STEP;
     if (breakpoint != Qnil) {
-      binding = rb_tracearg_binding(tp);
-      update_frame(context_object, file, line, binding, self);
       context->stop_reason = CTX_STOP_BREAKPOINT;
       rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
     }
@@ -188,9 +226,6 @@ process_line_event(VALUE trace_point, void *data)
 static void
 process_return_event(VALUE trace_point, void *data)
 {
-  VALUE path;
-  VALUE lineno;
-  VALUE self;
   VALUE context_object;
   debug_context_t *context;
 
@@ -204,35 +239,21 @@ process_return_event(VALUE trace_point, void *data)
       context->stop_frame = 0;
   }
 
-  load_frame_info(TRACE_POINT, &path, &lineno, &self);
-  if (debug == Qtrue)
-    fprintf(stderr, "return: file=%s, line=%d, stack_size=%d\n", RSTRING_PTR(path), FIX2INT(lineno), context->stack_size);
-  // rb_funcall(context_object, idAtReturn, 2, path, lineno);
-  pop_frame(context_object);
+  print_event(trace_point, context);
   cleanup(context);
 }
 
 static void
 process_call_event(VALUE trace_point, void *data)
 {
-  VALUE path;
-  VALUE lineno;
-  VALUE binding;
-  VALUE self;
   VALUE context_object;
-  rb_trace_point_t* tp;
   debug_context_t *context;
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
   
-  tp = TRACE_POINT;
-  load_frame_info(tp, &path, &lineno, &self);
-  binding = rb_tracearg_binding(tp);
-  if (debug == Qtrue)
-    fprintf(stderr, "call: file=%s, line=%d, stack_size=%d\n", RSTRING_PTR(path), FIX2INT(lineno), context->stack_size);
-  push_frame(context_object, RSTRING_PTR(path), FIX2INT(lineno), binding, self);
+  print_event(trace_point, context);
   cleanup(context);
 }
 
@@ -241,8 +262,6 @@ process_raise_event(VALUE trace_point, void *data)
 {
   VALUE path;
   VALUE lineno;
-  VALUE binding;
-  VALUE self;
   VALUE context_object;
   VALUE hit_count;
   VALUE exception_name;
@@ -256,14 +275,13 @@ process_raise_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
-  tp = TRACE_POINT;
-  load_frame_info(tp, &path, &lineno, &self);
-  binding = rb_tracearg_binding(tp);
-  file = RSTRING_PTR(path);
-  line = FIX2INT(lineno);
-  update_frame(context_object, file, line, binding, self);
-
   if (catchpoint_hit_count(catchpoints, rb_errinfo(), &exception_name) != Qnil) {
+    tp = TRACE_POINT;
+    path = rb_tracearg_path(tp);
+    lineno = rb_tracearg_lineno(tp);
+    file = RSTRING_PTR(path);
+    line = FIX2INT(lineno);
+
     /* On 64-bit systems with gcc and -O2 there seems to be
        an optimization bug in running INT2FIX(FIX2INT...)..)
        So we do this in two steps.

@@ -24,23 +24,34 @@ Context_thnum(VALUE self) {
 }
 
 static inline void
-delete_frame(debug_context_t *context)
-{
-  debug_frame_t *frame;
-
-  frame = context->stack;
-  context->stack = frame->prev;
-  context->stack_size--;
-  xfree(frame);
-}
-
-static inline void
 fill_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self)
 { 
   frame->file = file;
   frame->line = line;
   frame->binding = binding != Qnil ? binding : frame->binding;
   frame->self = self;  
+}
+
+extern void 
+fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
+  VALUE locations;
+  VALUE location;
+  char *file;
+  int line;
+  long stack_size;
+  long i;
+
+  locations = rb_debug_inspector_backtrace_locations(inspector);
+  stack_size = RARRAY_LEN(locations);
+  context->stack_size = stack_size;
+  context->stack = ALLOC_N(debug_frame_t, stack_size);
+
+  for (i = 0; i < stack_size; i++) {
+    location = rb_ary_entry(locations, i);
+    file = RSTRING_PTR(rb_funcall(location, rb_intern("path"), 0));
+    line = FIX2INT(rb_funcall(location, rb_intern("lineno"), 0));
+    fill_frame(&context->stack[i], file, line, rb_debug_inspector_frame_binding_get(inspector, i), rb_debug_inspector_frame_self_get(inspector, i));
+  }
 }
 
 static inline VALUE 
@@ -77,64 +88,24 @@ Context_ignored(VALUE self)
   return CTX_FL_TEST(context, CTX_FL_IGNORE) ? Qtrue : Qfalse;
 }
 
-extern void  
-push_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE self) 
-{
-  debug_context_t *context;
-  debug_frame_t *frame;
-  Data_Get_Struct(context_object, debug_context_t, context);
-
-  frame = ALLOC(debug_frame_t);
-  frame->binding = Qnil;
-  fill_frame(frame, file, line, binding, self);
-  frame->prev = context->stack;
-  context->stack = frame;
-  context->stack_size++;
-}
-
-extern void
-pop_frame(VALUE context_object) 
-{
-  debug_context_t *context;
-  Data_Get_Struct(context_object, debug_context_t, context);
-
-  if (context->stack_size > 0) {
-    delete_frame(context);
-  }
-}
-
-extern void
-update_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE self) 
-{
-  debug_context_t *context;
-  Data_Get_Struct(context_object, debug_context_t, context);
-
-  if (context->stack_size == 0) {
-  	push_frame(context_object, file, line, binding, self);
-    return;
-  }
-  fill_frame(context->stack, file, line, binding, self);
-}
-
 static void 
 Context_mark(debug_context_t *context) 
 {
   debug_frame_t *frame;
+  long i;
 
   rb_gc_mark(context->thread);
   frame = context->stack;
-  while (frame != NULL) {
+  for(i = 0; i < context->stack_size; i++) 
+  {
+    frame = &context->stack[i];
     rb_gc_mark(frame->self);
     rb_gc_mark(frame->binding);
-    frame = frame->prev;
   }
 }
 
 static void
 Context_free(debug_context_t *context) {
-  while(context->stack_size > 0) {
-    delete_frame(context);
-  }
   xfree(context);
 }
 
@@ -160,23 +131,16 @@ static inline void
 check_frame_number_valid(debug_context_t *context, int frame_no)
 {
   if (frame_no < 0 || frame_no >= context->stack_size) {
-    rb_raise(rb_eArgError, "Invalid frame number %d, stack (0...%d)",
+    rb_raise(rb_eArgError, "Invalid frame number %d, stack (0...%ld)",
         frame_no, context->stack_size);
   }
 }
 
 static debug_frame_t*
-get_frame_no(debug_context_t *context, int frame_n)
+get_frame_no(debug_context_t *context, int frame_no)
 {
-  debug_frame_t *frame;
-  int i;
-
-  check_frame_number_valid(context, frame_n);
-  frame = context->stack;
-  for (i = 0; i < frame_n; i++) {
-    frame = frame->prev;
-  }
-  return frame;
+  check_frame_number_valid(context, frame_no);
+  return &context->stack[frame_no];
 }
 
 static VALUE

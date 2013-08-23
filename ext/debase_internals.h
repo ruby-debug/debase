@@ -30,9 +30,8 @@ typedef struct rb_trace_arg_struct rb_trace_point_t;
 /* types */
 typedef enum {CTX_STOP_NONE, CTX_STOP_STEP, CTX_STOP_BREAKPOINT, CTX_STOP_CATCHPOINT} ctx_stop_reason;
 
-typedef struct debug_frame_t
+typedef struct
 {
-    struct debug_frame_t *prev;
     char *file;
     int line;
     VALUE binding;
@@ -41,7 +40,7 @@ typedef struct debug_frame_t
 
 typedef struct {
   debug_frame_t *stack;
-  int stack_size;
+  long stack_size;
 
   VALUE thread;
   int thnum;
@@ -49,22 +48,28 @@ typedef struct {
   
   ctx_stop_reason stop_reason;
   int stop_next;
-  int dest_frame;
+  long dest_frame;
   int stop_line;
-  int stop_frame;
+  long stop_frame;
 
   char *last_file;
   int last_line;
 } debug_context_t;
+
+typedef struct
+{
+  debug_context_t *context;
+  VALUE context_object;
+  VALUE path;
+  VALUE lineno;
+} inspector_data_t;
 
 /* functions */
 extern VALUE Init_context(VALUE mDebase);
 extern VALUE context_create(VALUE thread, VALUE cDebugThread);
 extern void reset_stepping_stop_points(debug_context_t *context);
 extern VALUE Context_ignored(VALUE self);
-extern void push_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE self);
-extern void pop_frame(VALUE context_object);
-extern void update_frame(VALUE context_object, char* file, int line, VALUE binding, VALUE self);
+extern void fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector);
 
 /* locked threads container */
 /* types */
