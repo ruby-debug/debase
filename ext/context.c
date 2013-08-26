@@ -28,30 +28,57 @@ fill_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self
 { 
   frame->file = file;
   frame->line = line;
-  frame->binding = binding != Qnil ? binding : frame->binding;
+  frame->binding = binding;
   frame->self = self;  
 }
 
 extern void 
 fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
+  debug_frame_t *frame;
   VALUE locations;
   VALUE location;
+  VALUE path;
+  VALUE lineno;
   char *file;
   int line;
-  long stack_size;
-  long i;
+  int stack_size;
+  int i;
 
   locations = rb_debug_inspector_backtrace_locations(inspector);
-  stack_size = RARRAY_LEN(locations);
-  context->stack_size = stack_size;
-  context->stack = ALLOC_N(debug_frame_t, stack_size);
+  stack_size = (int)RARRAY_LEN(locations);
+  if (context->stack_size != stack_size) {
+    fprintf(stderr, "Stack size mismatch: calculated %d vs inspector %d\n", context->stack_size, stack_size);
+    context->stack_size = stack_size;
+    // rb_raise(rb_eRuntimeError, "stack size mismatch for thread %d: calculated=%ld, real=%ld", context->thnum, context->stack_size, stack_size);
+  }
 
   for (i = 0; i < stack_size; i++) {
+    frame = ALLOC(debug_frame_t);
     location = rb_ary_entry(locations, i);
-    file = RSTRING_PTR(rb_funcall(location, rb_intern("path"), 0));
-    line = FIX2INT(rb_funcall(location, rb_intern("lineno"), 0));
-    fill_frame(&context->stack[i], file, line, rb_debug_inspector_frame_binding_get(inspector, i), rb_debug_inspector_frame_self_get(inspector, i));
+    path = rb_funcall(location, rb_intern("path"), 0);
+    lineno = rb_funcall(location, rb_intern("lineno"), 0);
+    file = RSTRING_PTR(path);
+    line = FIX2INT(lineno);
+    fprintf(stderr, "%s:%d\n", file, line);
+    fill_frame(frame, file, line, rb_debug_inspector_frame_binding_get(inspector, i), rb_debug_inspector_frame_self_get(inspector, i));
+    frame->prev = context->stack;
+    context->stack = frame;
   }
+}
+
+extern void
+clear_stack(debug_context_t *context)
+{  
+  debug_frame_t *frame;
+  debug_frame_t *prev;
+
+  frame = context->stack;
+  while(frame != NULL) {
+    prev = frame->prev;
+    xfree(frame);
+    frame = prev;
+  }
+  context->stack = NULL;
 }
 
 static inline VALUE 
@@ -92,15 +119,14 @@ static void
 Context_mark(debug_context_t *context) 
 {
   debug_frame_t *frame;
-  long i;
 
   rb_gc_mark(context->thread);
   frame = context->stack;
-  for(i = 0; i < context->stack_size; i++) 
+  while(frame != NULL)
   {
-    frame = &context->stack[i];
     rb_gc_mark(frame->self);
     rb_gc_mark(frame->binding);
+    frame = frame->prev;
   }
 }
 
@@ -114,7 +140,7 @@ context_create(VALUE thread, VALUE cDebugThread) {
   debug_context_t *context;
 
   context = ALLOC(debug_context_t);
-  context->stack_size = 0;
+  context->stack_size = (int)RARRAY_LEN(rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1)));
   context->stack = NULL;
   context->thnum = ++thnum_current;
   context->thread = thread;
@@ -131,7 +157,7 @@ static inline void
 check_frame_number_valid(debug_context_t *context, int frame_no)
 {
   if (frame_no < 0 || frame_no >= context->stack_size) {
-    rb_raise(rb_eArgError, "Invalid frame number %d, stack (0...%ld)",
+    rb_raise(rb_eArgError, "Invalid frame number %d, stack (0...%d)",
         frame_no, context->stack_size);
   }
 }
@@ -139,8 +165,15 @@ check_frame_number_valid(debug_context_t *context, int frame_no)
 static debug_frame_t*
 get_frame_no(debug_context_t *context, int frame_no)
 {
+  debug_frame_t *frame;
+  int i;
+
   check_frame_number_valid(context, frame_no);
-  return &context->stack[frame_no];
+  frame = context->stack;
+  for (i = 0; i < context->stack_size - frame_no - 1; i++) {
+    frame = frame->prev;
+  }
+  return frame;
 }
 
 static VALUE

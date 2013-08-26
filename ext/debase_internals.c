@@ -52,6 +52,8 @@ cleanup(debug_context_t *context)
 
   context->stop_reason = CTX_STOP_NONE;
 
+  clear_stack(context);
+
   /* release a lock */
   locker = Qnil;
   
@@ -107,10 +109,13 @@ static inline void
 print_event(VALUE trace_point, debug_context_t *context)
 {  
   rb_trace_point_t *tp;
+  VALUE locations;
+  VALUE location;
   VALUE path;
   VALUE line;
   VALUE event;
   VALUE mid;
+  int i;
 
   if (debug == Qtrue) {
     tp = TRACE_POINT;
@@ -119,50 +124,54 @@ print_event(VALUE trace_point, debug_context_t *context)
     event = rb_tracearg_event(tp);
     mid = rb_tracearg_method_id(tp);
     fprintf(stderr, "%s: file=%s, line=%d, mid=%s\n", rb_id2name(SYM2ID(event)), RSTRING_PTR(path), FIX2INT(line), rb_id2name(SYM2ID(mid)));
+    locations = rb_funcall(context->thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
+    fprintf(stderr, "    stack_size=%d, thread=%d, real_stack_size=%d\n", context->stack_size, context->thnum, (int)RARRAY_LEN(locations));
+    for (i = 0; i < (int)RARRAY_LEN(locations); i++) {
+      location = rb_ary_entry(locations, i);
+      path = rb_funcall(location, rb_intern("path"), 0);
+      line = rb_funcall(location, rb_intern("lineno"), 0);
+      fprintf(stderr, "%s:%d\n", RSTRING_PTR(path), FIX2INT(line));
+    }
+    fprintf(stderr, "========\n");
   }
 }
 
 static VALUE
-fill_stack_and_invoke(const rb_debug_inspector_t *inspector, void *_data)
+fill_stack_and_invoke(const rb_debug_inspector_t *inspector, void *data)
 {
-  inspector_data_t *data;
+  debug_context_t *context;
+  VALUE context_object;
 
-  data = (inspector_data_t *)_data;
-  fill_stack(data->context, inspector);
+  context_object = *(VALUE *)data;
+  Data_Get_Struct(context_object, debug_context_t, context);
+  fill_stack(context, inspector);
 
-  return rb_funcall(data->context_object, idAtLine, 2, data->path, data->lineno);
+  return Qnil;
 }
 
 static VALUE
-start_inspector(inspector_data_t *data)
+start_inspector(VALUE data)
 {
-    return rb_debug_inspector_open(fill_stack_and_invoke, data);
+  debug_context_t *context;
+
+  Data_Get_Struct(data, debug_context_t, context);
+  return rb_debug_inspector_open(fill_stack_and_invoke, &data);
 }
 
 static VALUE
-stop_inspector(inspector_data_t *data)
+stop_inspector(VALUE data)
 {
-    data->context->stack_size = 0;
-    xfree(data->context->stack);
-    data->context->stack = NULL;
-    return Qnil;
+  return Qnil;
 }
 
 static void 
-call_at_line(debug_context_t *context, char *file, int line, VALUE context_object, VALUE path, VALUE lineno)
+call_at_line(debug_context_t *context, char *file, int line, VALUE context_object)
 {
-  inspector_data_t data;
-
-  data.context = context;
-  data.context_object = context_object;
-  data.path = path;
-  data.lineno = lineno;
-
   CTX_FL_UNSET(context, CTX_FL_STEPPED);
   CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
   context->last_file = file;
   context->last_line = line;
-  rb_ensure(start_inspector, (VALUE)&data, stop_inspector, (VALUE)&data);
+  rb_funcall(context_object, idAtLine, 2, rb_str_new2(file), INT2FIX(line));
 }
 
 static void
@@ -212,13 +221,14 @@ process_line_event(VALUE trace_point, void *data)
 
   breakpoint = breakpoint_find(breakpoints, path, lineno);
   if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
+    rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
     context->stop_reason = CTX_STOP_STEP;
     if (breakpoint != Qnil) {
       context->stop_reason = CTX_STOP_BREAKPOINT;
       rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
     }
     reset_stepping_stop_points(context);
-    call_at_line(context, file, line, context_object, path, lineno);
+    call_at_line(context, file, line, context_object);
   }
   cleanup(context);
 }
@@ -240,6 +250,7 @@ process_return_event(VALUE trace_point, void *data)
   }
 
   print_event(trace_point, context);
+  context->stack_size--;
   cleanup(context);
 }
 
@@ -254,6 +265,7 @@ process_call_event(VALUE trace_point, void *data)
   if (!check_start_processing(context, rb_thread_current())) return;
   
   print_event(trace_point, context);
+  context->stack_size++;
   cleanup(context);
 }
 
@@ -291,7 +303,7 @@ process_raise_event(VALUE trace_point, void *data)
     rb_hash_aset(catchpoints, exception_name, hit_count);
     context->stop_reason = CTX_STOP_CATCHPOINT;
     rb_funcall(context_object, idAtCatchpoint, 1, rb_errinfo());
-    call_at_line(context, file, line, context_object, path, lineno);
+    call_at_line(context, file, line, context_object);
   }
 
   cleanup(context);
@@ -307,7 +319,7 @@ Debase_setup_tracepoints(VALUE self)
 
   tpLine = rb_tracepoint_new(Qnil, RUBY_EVENT_LINE, process_line_event, NULL);
   rb_tracepoint_enable(tpLine);
-  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_CLASS | RUBY_EVENT_END, 
+  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_B_RETURN, 
                                process_return_event, NULL);
   rb_tracepoint_enable(tpReturn);
   tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_B_CALL, 
@@ -315,6 +327,7 @@ Debase_setup_tracepoints(VALUE self)
   rb_tracepoint_enable(tpCall);
   tpRaise = rb_tracepoint_new(Qnil, RUBY_EVENT_RAISE, process_raise_event, NULL);
   rb_tracepoint_enable(tpRaise);
+  Debase_current_context(self);
   return Qnil;
 }
 
