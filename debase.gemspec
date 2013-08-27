@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
 
   s.extensions = ["ext/extconf.rb"]
 
+  s.add_dependency "debugger-ruby_core_source"
   s.add_development_dependency "test-unit"
   s.add_development_dependency "rake"
 end

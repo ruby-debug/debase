@@ -1,4 +1,5 @@
 #include <debase_internals.h>
+#include <hacks.h>
 
 static VALUE mDebase;                 /* Ruby Debase Module object */
 static VALUE cContext;
@@ -106,19 +107,15 @@ check_start_processing(debug_context_t *context, VALUE thread)
 }
 
 static inline void
-print_event(VALUE trace_point, debug_context_t *context)
+print_event(rb_trace_point_t *tp, debug_context_t *context)
 {  
-  rb_trace_point_t *tp;
   VALUE locations;
-  VALUE location;
   VALUE path;
   VALUE line;
   VALUE event;
   VALUE mid;
-  int i;
 
   if (debug == Qtrue) {
-    tp = TRACE_POINT;
     path = rb_tracearg_path(tp);
     line = rb_tracearg_lineno(tp);
     event = rb_tracearg_event(tp);
@@ -126,13 +123,6 @@ print_event(VALUE trace_point, debug_context_t *context)
     fprintf(stderr, "%s: file=%s, line=%d, mid=%s\n", rb_id2name(SYM2ID(event)), RSTRING_PTR(path), FIX2INT(line), rb_id2name(SYM2ID(mid)));
     locations = rb_funcall(context->thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
     fprintf(stderr, "    stack_size=%d, thread=%d, real_stack_size=%d\n", context->stack_size, context->thnum, (int)RARRAY_LEN(locations));
-    for (i = 0; i < (int)RARRAY_LEN(locations); i++) {
-      location = rb_ary_entry(locations, i);
-      path = rb_funcall(location, rb_intern("path"), 0);
-      line = rb_funcall(location, rb_intern("lineno"), 0);
-      fprintf(stderr, "%s:%d\n", RSTRING_PTR(path), FIX2INT(line));
-    }
-    fprintf(stderr, "========\n");
   }
 }
 
@@ -197,7 +187,8 @@ process_line_event(VALUE trace_point, void *data)
   file = RSTRING_PTR(path);
   line = FIX2INT(lineno);
 
-  print_event(trace_point, context);
+  update_stack_size(context);
+  print_event(tp, context);
 
   moved = context->last_line != line || context->last_file == NULL ||
           strcmp(context->last_file, file) != 0;
@@ -243,14 +234,15 @@ process_return_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
+  update_stack_size(context);
   if(context->stack_size == context->stop_frame)
   {
       context->stop_next = 1;
       context->stop_frame = 0;
   }
 
-  print_event(trace_point, context);
-  context->stack_size--;
+  
+  print_event(TRACE_POINT, context);
   cleanup(context);
 }
 
@@ -263,9 +255,9 @@ process_call_event(VALUE trace_point, void *data)
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
-  
-  print_event(trace_point, context);
-  context->stack_size++;
+
+  update_stack_size(context);
+  print_event(TRACE_POINT, context); 
   cleanup(context);
 }
 
@@ -319,15 +311,16 @@ Debase_setup_tracepoints(VALUE self)
 
   tpLine = rb_tracepoint_new(Qnil, RUBY_EVENT_LINE, process_line_event, NULL);
   rb_tracepoint_enable(tpLine);
-  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_B_RETURN, 
+  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_END, 
                                process_return_event, NULL);
   rb_tracepoint_enable(tpReturn);
-  tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_B_CALL, 
+  tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_B_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_CLASS, 
                              process_call_event, NULL);
   rb_tracepoint_enable(tpCall);
   tpRaise = rb_tracepoint_new(Qnil, RUBY_EVENT_RAISE, process_raise_event, NULL);
   rb_tracepoint_enable(tpRaise);
   Debase_current_context(self);
+
   return Qnil;
 }
 
@@ -346,6 +339,7 @@ Debase_remove_tracepoints(VALUE self)
   tpCall = Qnil;
   if (tpRaise != Qnil) rb_tracepoint_disable(tpRaise);
   tpRaise = Qnil;
+
   return Qnil;
 }
 

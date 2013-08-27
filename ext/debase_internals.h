@@ -39,7 +39,7 @@ typedef struct debug_frame_t
     VALUE self;
 } debug_frame_t;
 
-typedef struct {
+typedef struct debug_context {
   debug_frame_t *stack;
   int stack_size;
 
