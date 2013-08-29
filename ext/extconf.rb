@@ -26,8 +26,10 @@ hdrs = proc {
 config_file = File.join(File.dirname(__FILE__), 'config_options.rb')
 load config_file if File.exist?(config_file)
 
-$CFLAGS+=' -Wall -Werror'
-$CFLAGS+=' -g3' if ENV['debug']  
+if ENV['debase_debug']
+  $CFLAGS+=' -Wall -Werror' 
+  $CFLAGS+=' -g3'
+end
 
 dir_config("ruby")
 if !Debugger::RubyCoreSource.create_makefile_with_core(hdrs, "debase_internals")
