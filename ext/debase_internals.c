@@ -142,9 +142,6 @@ fill_stack_and_invoke(const rb_debug_inspector_t *inspector, void *data)
 static VALUE
 start_inspector(VALUE data)
 {
-  debug_context_t *context;
-
-  Data_Get_Struct(data, debug_context_t, context);
   return rb_debug_inspector_open(fill_stack_and_invoke, &data);
 }
 

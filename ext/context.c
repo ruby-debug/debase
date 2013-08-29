@@ -134,7 +134,7 @@ context_create(VALUE thread, VALUE cDebugThread) {
   debug_context_t *context;
 
   context = ALLOC(debug_context_t);
-  context->stack_size = (int)RARRAY_LEN(rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1)));
+  context->stack_size = 0;
   context->stack = NULL;
   context->thnum = ++thnum_current;
   context->thread = thread;
