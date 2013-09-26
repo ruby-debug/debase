@@ -46,6 +46,7 @@ fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
 
   locations = rb_debug_inspector_backtrace_locations(inspector);
   stack_size = (int)RARRAY_LEN(locations);
+  context->stack_size = stack_size;
 
   for (i = 0; i < stack_size; i++) {
     frame = ALLOC(debug_frame_t);
