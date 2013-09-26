@@ -151,9 +151,21 @@ stop_inspector(VALUE data)
   return Qnil;
 }
 
+static int
+remove_pause_flag(VALUE thread, VALUE context_object, VALUE ignored)
+{
+  debug_context_t *context;
+
+  Data_Get_Struct(context_object, debug_context_t, context);
+  context->thread_pause = 0;
+
+  return ST_CONTINUE;
+}
+
 static void 
 call_at_line(debug_context_t *context, char *file, int line, VALUE context_object)
 {
+  rb_hash_foreach(contexts, remove_pause_flag, 0);
   CTX_FL_UNSET(context, CTX_FL_STEPPED);
   CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
   context->last_file = file;
@@ -187,8 +199,17 @@ process_line_event(VALUE trace_point, void *data)
   update_stack_size(context);
   print_event(tp, context);
 
-  moved = context->last_line != line || context->last_file == NULL ||
-          strcmp(context->last_file, file) != 0;
+  if (context->thread_pause)
+  {
+    context->stop_next = 1;
+    context->dest_frame = -1;
+    moved = 1;
+  }
+  else
+  {
+    moved = context->last_line != line || context->last_file == NULL ||
+            strcmp(context->last_file, file) != 0;
+  }
 
   if(context->dest_frame == -1 || context->stack_size == context->dest_frame)
   {

@@ -52,6 +52,7 @@ typedef struct debug_context {
   int dest_frame;
   int stop_line;
   int stop_frame;
+  int thread_pause;
 
   char *last_file;
   int last_line;

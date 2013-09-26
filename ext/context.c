@@ -142,6 +142,7 @@ context_create(VALUE thread, VALUE cDebugThread) {
   context->last_file = NULL;
   context->last_line = -1;
   context->stop_frame = -1;
+  context->thread_pause = 0;
   reset_stepping_stop_points(context);
   if(rb_obj_class(thread) == cDebugThread) CTX_FL_SET(context, CTX_FL_IGNORE);
   return Data_Wrap_Struct(cContext, Context_mark, Context_free, context);
@@ -256,6 +257,22 @@ Context_stop_reason(VALUE self)
 }
 
 static VALUE
+Context_pause(VALUE self)
+{
+  debug_context_t *context;
+
+  Data_Get_Struct(self, debug_context_t, context);
+
+  if (context->thread == rb_thread_current())
+  {
+    return Qfalse;
+  }
+
+  context->thread_pause = 1;
+  return Qtrue;
+}
+
+static VALUE
 Context_stop_next(int argc, VALUE *argv, VALUE self)
 {
   VALUE steps;
@@ -344,6 +361,7 @@ Init_context(VALUE mDebase)
   rb_define_method(cContext, "step", Context_stop_next, -1);
   rb_define_method(cContext, "step_over", Context_step_over, -1);
   rb_define_method(cContext, "stop_frame=", Context_stop_frame, 1);
+  rb_define_method(cContext, "pause", Context_pause, 0);
 
   idAlive = rb_intern("alive?");
 
