@@ -1,3 +1,11 @@
+if defined?(RUBY_ENGINE) && 'rbx' == RUBY_ENGINE
+  # create dummy Makefile to indicate success
+  f = File.open(File.join(File.dirname(__FILE__), "Makefile"), "w")
+  f.write("all:\n\techo all\ninstall:\n\techo installed\n")
+  f.close
+  return
+end
+
 # autodetect ruby headers
 unless ARGV.any? {|arg| arg.include?('--with-ruby-include') }
   require 'rbconfig'

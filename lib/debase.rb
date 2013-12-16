@@ -1,4 +1,8 @@
-require "debase_internals"
+if defined?(RUBY_ENGINE) && 'rbx' == RUBY_ENGINE
+  require 'debase/rbx'
+else
+  require "debase_internals"
+end
 require "debase/version"
 require "debase/context"
 
