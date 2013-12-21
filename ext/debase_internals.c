@@ -297,7 +297,9 @@ process_raise_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
+  update_stack_size(context);
   if (catchpoint_hit_count(catchpoints, rb_errinfo(), &exception_name) != Qnil) {
+    rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
     tp = TRACE_POINT;
     path = rb_tracearg_path(tp);
     lineno = rb_tracearg_lineno(tp);
