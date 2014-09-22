@@ -12,6 +12,7 @@ unless ARGV.any? {|arg| arg.include?('--with-ruby-include') }
   bindir = RbConfig::CONFIG['bindir']
   if bindir =~ %r{(^.*/\.rbenv/versions)/([^/]+)/bin$}
     ruby_include = "#{$1}/#{$2}/include/ruby-1.9.1/ruby-#{$2}"
+    ruby_include = "#{ENV['RBENV_ROOT']}/sources/#{$2}/ruby-#{$2}" unless File.exist?(ruby_include)
     ARGV << "--with-ruby-include=#{ruby_include}"
   elsif bindir =~ %r{(^.*/\.rvm/rubies)/([^/]+)/bin$}
     ruby_include = "#{$1}/#{$2}/include/ruby-1.9.1/#{$2}"
