@@ -21,7 +21,7 @@ unless ARGV.any? {|arg| arg.include?('--with-ruby-include') }
 end
 
 require "mkmf"
-require "debugger/ruby_core_source"
+require "debase/ruby_core_source"
 
 hdrs = proc {
   have_header("vm_core.h")
@@ -40,7 +40,7 @@ if ENV['debase_debug']
 end
 
 dir_config("ruby")
-if !Debugger::RubyCoreSource.create_makefile_with_core(hdrs, "debase_internals")
+if !Debase::RubyCoreSource.create_makefile_with_core(hdrs, "debase_internals")
   STDERR.print("Makefile creation failed\n")
   STDERR.print("*************************************************************\n\n")
   STDERR.print("  NOTE: If your headers were not found, try passing\n")
