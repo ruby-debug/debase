@@ -6,3 +6,6 @@ ext/*.o
 ext/*.bundle
 ext/Makefile
 ext/*.log
+.ruby-gemset
+.ruby-version
+
