@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = Debase::VERSION
   s.authors     = ["Dennis Ushakov"]
   s.email       = ["dennis.ushakov@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/denofevil/debase"
   s.summary     = %q{debase is a fast implementation of the standard Ruby debugger debug.rb for Ruby 2.0}
   s.description = <<-EOF
     debase is a fast implementation of the standard Ruby debugger debug.rb for Ruby 2.0.
