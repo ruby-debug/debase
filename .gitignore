@@ -8,4 +8,6 @@ ext/Makefile
 ext/*.log
 .ruby-gemset
 .ruby-version
+.idea/*
+
 
