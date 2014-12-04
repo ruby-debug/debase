@@ -10,7 +10,11 @@ task :clean do
       sh "make clean"
       rm  "Makefile"
     end
-    derived_files = Dir.glob(".o") + Dir.glob("*.so") + Dir.glob("*.bundle") 
+    derived_files = Dir.glob(".o") + Dir.glob("*.so") + Dir.glob("*.bundle")
+    rm derived_files unless derived_files.empty?
+  end
+  cd 'pkg' do
+    derived_files = Dir.glob('*.gem')
     rm derived_files unless derived_files.empty?
   end
 end
