@@ -4,7 +4,11 @@ module Debase
       result = {}
       binding = frame_binding(frame_no)
       locals = eval("local_variables", binding)
-      locals.each {|local| result[local.to_s] = eval(local.to_s, binding)}
+      if locals.respond_to?(:each)
+        locals.each {|local| result[local.to_s] = eval(local.to_s, binding)}
+      else
+        result[locals.to_s] = eval(locals.to_s, binding)
+      end
       result
     end  
 
