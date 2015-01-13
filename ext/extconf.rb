@@ -22,6 +22,9 @@ unless ARGV.any? {|arg| arg.include?('--with-ruby-include') }
 end
 
 require "mkmf"
+
+RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
+
 require "debase/ruby_core_source"
 
 hdrs = proc {
