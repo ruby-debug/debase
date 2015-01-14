@@ -13,9 +13,11 @@ task :clean do
     derived_files = Dir.glob(".o") + Dir.glob("*.so") + Dir.glob("*.bundle")
     rm derived_files unless derived_files.empty?
   end
-  cd 'pkg' do
-    derived_files = Dir.glob('*.gem')
-    rm derived_files unless derived_files.empty?
+  if File.exists?('pkg')
+    cd 'pkg' do
+      derived_files = Dir.glob('*.gem')
+      rm derived_files unless derived_files.empty?
+    end
   end
 end
 
