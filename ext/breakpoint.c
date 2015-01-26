@@ -33,7 +33,7 @@ catchpoint_hit_count(VALUE catchpoints, VALUE exception, VALUE *exception_name) 
     hit_count = rb_hash_aref(catchpoints, mod_name);
     if(hit_count != Qnil)
     {
-      *exception_name = mod_name;	
+      *exception_name = mod_name;
       return hit_count;
     }
   }
