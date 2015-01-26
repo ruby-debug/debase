@@ -123,6 +123,16 @@ Breakpoint_pos(VALUE self)
   return INT2FIX(breakpoint->line);
 }
 
+static VALUE
+Breakpoint_set_expr(VALUE self, VALUE expr)
+{
+  breakpoint_t *breakpoint;
+
+  Data_Get_Struct(self, breakpoint_t, breakpoint);
+  breakpoint->expr = NIL_P(expr) ? expr : StringValue(expr);
+  return breakpoint->expr;
+}
+
 int
 filename_cmp_impl(VALUE source, char *file)
 {
@@ -229,5 +239,6 @@ Init_breakpoint(VALUE mDebase)
   rb_define_method(cBreakpoint, "id", Breakpoint_id, 0);
   rb_define_method(cBreakpoint, "source", Breakpoint_source, 0);
   rb_define_method(cBreakpoint, "pos", Breakpoint_pos, 0);
+  rb_define_method(cBreakpoint, "expr=", Breakpoint_set_expr, 0);
   rb_define_alloc_func(cBreakpoint, Breakpoint_create);
 }

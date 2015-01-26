@@ -3,6 +3,7 @@ module Debase
     @@global_id = 1
 
     attr_accessor :source, :pos
+    attr_writer :expr
     attr_reader :id
 
     def initialize(file, line, expr=nil)
