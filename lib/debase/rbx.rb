@@ -13,7 +13,7 @@ module Debase
       @breakpoints = []
       Rubinius::CodeLoader.compiled_hook.add proc { |script|
         @breakpoints.each { | b |
-          if (b.source == script.file_path)
+          if b.source == script.file_path
             exec, ip = script.compiled_code.locate_line(b.pos)
             if exec
               exec.set_breakpoint ip, b
@@ -35,7 +35,7 @@ module Debase
     end
 
     def cleanup_contexts
-      @contexts.delete_if { |key, value| !key.alive? }
+      @contexts.delete_if { |key, _| !key.alive? }
     end
 
     def contexts
