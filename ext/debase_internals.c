@@ -298,9 +298,9 @@ process_raise_event(VALUE trace_point, void *data)
   if (!check_start_processing(context, rb_thread_current())) return;
 
   update_stack_size(context);
-  if (catchpoint_hit_count(catchpoints, rb_errinfo(), &exception_name) != Qnil) {
+  tp = TRACE_POINT;
+  if (catchpoint_hit_count(catchpoints, rb_tracearg_raised_exception(tp), &exception_name) != Qnil) {
     rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
-    tp = TRACE_POINT;
     path = rb_tracearg_path(tp);
     lineno = rb_tracearg_lineno(tp);
     file = RSTRING_PTR(path);
