@@ -49,6 +49,24 @@ module Debase
     def add_catchpoint(exception)
       catchpoints[exception] = 0
     end
+
+    #call-seq:
+    #   Debase.skip { block } -> obj or nil
+    #
+    #The code inside of the block is escaped from the debugger.
+    def skip
+      #it looks like no-op is ok for this method for now
+      #no-op
+    end
+
+    #call-seq:
+    #   Debugger.last_interrupted -> context
+    #
+    #Returns last debugged context.
+    def last_context
+      # not sure why we need this so let's return nil for now ;)
+      nil
+    end
   end
   
   class DebugThread < Thread
