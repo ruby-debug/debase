@@ -323,7 +323,7 @@ process_raise_event(VALUE trace_point, void *data)
 
 static VALUE
 Debase_setup_tracepoints(VALUE self)
-{	
+{
   if (catchpoints != Qnil) return Qnil;
   contexts = rb_hash_new();
   breakpoints = rb_ary_new();
