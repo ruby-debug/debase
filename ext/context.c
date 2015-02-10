@@ -133,9 +133,12 @@ Context_free(debug_context_t *context) {
 extern VALUE
 context_create(VALUE thread, VALUE cDebugThread) {
   debug_context_t *context;
+  VALUE locations;
 
   context = ALLOC(debug_context_t);
   context->stack_size = 0;
+  locations = rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
+  context->calced_stack_size = locations != Qnil ? (int)RARRAY_LEN(locations) : 0;
   context->stack = NULL;
   context->thnum = ++thnum_current;
   context->thread = thread;
@@ -306,15 +309,15 @@ Context_step_over(int argc, VALUE *argv, VALUE self)
   rb_scan_args(argc, argv, "12", &lines, &frame, &force);
   context->stop_line = FIX2INT(lines);
   CTX_FL_UNSET(context, CTX_FL_STEPPED);
-  if(frame == Qnil)
+  if (frame == Qnil)
   {
-    context->dest_frame = context->stack_size;
+    context->dest_frame = context->calced_stack_size;
   }
   else
   {
-    if(FIX2INT(frame) < 0 && FIX2INT(frame) >= context->stack_size)
+    if (FIX2INT(frame) < 0 && FIX2INT(frame) >= context->calced_stack_size)
       rb_raise(rb_eRuntimeError, "Destination frame is out of range.");
-    context->dest_frame = context->stack_size - FIX2INT(frame);
+    context->dest_frame = context->calced_stack_size - FIX2INT(frame);
   }
   if(RTEST(force))
     CTX_FL_SET(context, CTX_FL_FORCE_MOVE);
