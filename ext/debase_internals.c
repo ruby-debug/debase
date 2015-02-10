@@ -106,6 +106,21 @@ check_start_processing(debug_context_t *context, VALUE thread)
   return 1;
 }
 
+static inline const char*
+symbol2str(VALUE symbol)
+{
+  VALUE id;
+  static const char* nil_str= "nil";
+  if (symbol == Qnil) {
+    return nil_str;
+  }
+  id = SYM2ID(symbol);
+  if (symbol == Qnil) {
+    return nil_str;
+  }
+  return rb_id2name(id);
+}
+
 static inline void
 print_event(rb_trace_point_t *tp, debug_context_t *context)
 {  
@@ -120,9 +135,10 @@ print_event(rb_trace_point_t *tp, debug_context_t *context)
     line = rb_tracearg_lineno(tp);
     event = rb_tracearg_event(tp);
     mid = rb_tracearg_method_id(tp);
-    fprintf(stderr, "%s: file=%s, line=%d, mid=%s\n", rb_id2name(SYM2ID(event)), RSTRING_PTR(path), FIX2INT(line), rb_id2name(SYM2ID(mid)));
+    fprintf(stderr, "%s: file=%s, line=%d, mid=%s\n", symbol2str(event), RSTRING_PTR(path), FIX2INT(line), symbol2str(mid));
     locations = rb_funcall(context->thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
-    fprintf(stderr, "    stack_size=%d, thread=%d, real_stack_size=%d\n", context->stack_size, context->thnum, (int)RARRAY_LEN(locations));
+    fprintf(stderr, "    stack_size=%d, thread=%d, real_stack_size=%d\n", context->stack_size, context->thnum,
+            locations != Qnil ? (int)RARRAY_LEN(locations) : 0);
   }
 }
 
