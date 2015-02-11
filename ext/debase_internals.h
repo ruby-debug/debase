@@ -53,6 +53,7 @@ typedef struct debug_context {
   int stop_frame;
   int thread_pause;
 
+  /* dest_frame uses calced_stack_size for stepping */
   int dest_frame;
   int calced_stack_size;
 
