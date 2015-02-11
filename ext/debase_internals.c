@@ -137,7 +137,8 @@ print_event(rb_trace_point_t *tp, debug_context_t *context)
     mid = rb_tracearg_method_id(tp);
     fprintf(stderr, "%s: file=%s, line=%d, mid=%s\n", symbol2str(event), RSTRING_PTR(path), FIX2INT(line), symbol2str(mid));
     locations = rb_funcall(context->thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
-    fprintf(stderr, "    stack_size=%d, thread=%d, real_stack_size=%d\n", context->stack_size, context->thnum,
+    fprintf(stderr, "    calced_stack_size=%d, stack_size=%d, thread=%d, real_stack_size=%d\n",
+            context->calced_stack_size, context->stack_size, context->thnum,
             locations != Qnil ? (int)RARRAY_LEN(locations) : 0);
   }
 }
@@ -227,7 +228,7 @@ process_line_event(VALUE trace_point, void *data)
             strcmp(context->last_file, file) != 0;
   }
 
-  if(context->dest_frame == -1 || context->stack_size == context->dest_frame)
+  if (context->dest_frame == -1 || context->calced_stack_size == context->dest_frame)
   {
       if(moved || !CTX_FL_TEST(context, CTX_FL_FORCE_MOVE))
           context->stop_next--;
@@ -239,7 +240,7 @@ process_line_event(VALUE trace_point, void *data)
           CTX_FL_UNSET(context, CTX_FL_STEPPED);
       }
   }
-  else if(context->stack_size < context->dest_frame)
+  else if(context->calced_stack_size < context->dest_frame)
   {
       context->stop_next = 0;
   }
@@ -268,6 +269,7 @@ process_return_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
+  --context->calced_stack_size;
   update_stack_size(context);
   if(context->stack_size == context->stop_frame)
   {
@@ -290,6 +292,7 @@ process_call_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
+  ++context->calced_stack_size;
   update_stack_size(context);
   print_event(TRACE_POINT, context); 
   cleanup(context);

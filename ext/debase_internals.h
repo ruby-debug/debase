@@ -49,10 +49,12 @@ typedef struct debug_context {
   
   ctx_stop_reason stop_reason;
   int stop_next;
-  int dest_frame;
   int stop_line;
   int stop_frame;
   int thread_pause;
+
+  int dest_frame;
+  int calced_stack_size;
 
   char *last_file;
   int last_line;
