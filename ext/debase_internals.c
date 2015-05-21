@@ -333,7 +333,7 @@ process_raise_event(VALUE trace_point, void *data)
     hit_count = INT2FIX(c_hit_count);
     rb_hash_aset(catchpoints, exception_name, hit_count);
     context->stop_reason = CTX_STOP_CATCHPOINT;
-    rb_funcall(context_object, idAtCatchpoint, 1, rb_errinfo());
+    rb_funcall(context_object, idAtCatchpoint, 1, rb_tracearg_raised_exception(tp));
     call_at_line(context, file, line, context_object);
   }
 
