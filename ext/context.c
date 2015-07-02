@@ -45,7 +45,7 @@ fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
   int i;
 
   locations = rb_debug_inspector_backtrace_locations(inspector);
-  stack_size = (int)RARRAY_LEN(locations);
+  stack_size = locations == Qnil ? 0 : (int)RARRAY_LEN(locations);
   context->stack_size = stack_size;
 
   for (i = 0; i < stack_size; i++) {
@@ -53,7 +53,7 @@ fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
     location = rb_ary_entry(locations, i);
     path = rb_funcall(location, rb_intern("path"), 0);
     lineno = rb_funcall(location, rb_intern("lineno"), 0);
-    file = RSTRING_PTR(path);
+    file = path != Qnil ? RSTRING_PTR(path) : "";
     line = FIX2INT(lineno);
     fill_frame(frame, file, line, rb_debug_inspector_frame_binding_get(inspector, i), rb_debug_inspector_frame_self_get(inspector, i));
     frame->prev = context->stack;
