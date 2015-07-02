@@ -129,16 +129,30 @@ print_event(rb_trace_point_t *tp, debug_context_t *context)
   VALUE line;
   VALUE event;
   VALUE mid;
+  VALUE rb_cl;
+  VALUE rb_cl_name;
+  const char *defined_class;
 
   if (debug == Qtrue) {
     path = rb_tracearg_path(tp);
     line = rb_tracearg_lineno(tp);
     event = rb_tracearg_event(tp);
     mid = rb_tracearg_method_id(tp);
-    fprintf(stderr, "%s: file=%s, line=%d, mid=%s\n", symbol2str(event), RSTRING_PTR(path), FIX2INT(line), symbol2str(mid));
+    rb_cl = rb_tracearg_defined_class(tp);
+    rb_cl_name = NIL_P(rb_cl) ? rb_cl : rb_mod_name(rb_cl);
+    defined_class = NIL_P(rb_cl_name) ? "" : RSTRING_PTR(rb_cl_name);
+
+    fprintf(stderr, "[#%d] %s@%s:%d %s#%s\n",
+            context->thnum,
+            symbol2str(event),
+            path == Qnil ? "" : RSTRING_PTR(path),
+            FIX2INT(line),
+            defined_class,
+            mid == Qnil ? "(top level)" : symbol2str(mid)
+    );
     locations = rb_funcall(context->thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
-    fprintf(stderr, "    calced_stack_size=%d, stack_size=%d, thread=%d, real_stack_size=%d\n",
-            context->calced_stack_size, context->stack_size, context->thnum,
+    fprintf(stderr, "    calced_stack_size=%d, stack_size=%d, real_stack_size=%d\n",
+            context->calced_stack_size, context->stack_size,
             locations != Qnil ? (int)RARRAY_LEN(locations) : 0);
   }
 }
@@ -294,7 +308,7 @@ process_call_event(VALUE trace_point, void *data)
 
   ++context->calced_stack_size;
   update_stack_size(context);
-  print_event(TRACE_POINT, context); 
+  print_event(TRACE_POINT, context);
   cleanup(context);
 }
 
