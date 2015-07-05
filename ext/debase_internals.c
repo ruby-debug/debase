@@ -290,8 +290,8 @@ process_return_event(VALUE trace_point, void *data)
   */
   if(context->calced_stack_size == context->stop_frame)
   {
-      context->stop_next = 1;
-      context->stop_frame = -1;
+    context->stop_next = 1;
+    context->stop_frame = -1;
   }
 
   
