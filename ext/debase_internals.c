@@ -285,6 +285,9 @@ process_return_event(VALUE trace_point, void *data)
 
   --context->calced_stack_size;
   update_stack_size(context);
+  /* it is important to check stop_frame after stack size updated
+     if the order will be changed change Context_stop_frame accordingly.
+  */
   if(context->calced_stack_size == context->stop_frame)
   {
       context->stop_next = 1;
