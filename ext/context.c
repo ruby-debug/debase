@@ -338,7 +338,7 @@ Context_stop_frame(VALUE self, VALUE frame)
   /* we decrease stack size by frame and 1 because we use stop_frame after
      updating stack size.  If that code will be changed this should be changed accordingly.
    */
-  debug_context->stop_frame = debug_context->calced_stack_size - FIX2INT(frame) - 1;
+  debug_context->stop_frame = debug_context->stack_size - FIX2INT(frame) - 1;
 
   return frame;
 }

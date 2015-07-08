@@ -288,13 +288,12 @@ process_return_event(VALUE trace_point, void *data)
   /* it is important to check stop_frame after stack size updated
      if the order will be changed change Context_stop_frame accordingly.
   */
-  if(context->calced_stack_size == context->stop_frame)
+  if(context->stack_size == context->stop_frame)
   {
     context->stop_next = 1;
     context->stop_frame = -1;
   }
 
-  
   print_event(TRACE_POINT, context);
   cleanup(context);
 }
