@@ -1,4 +1,9 @@
+[gem]: https://rubygems.org/gems/debase
+[travis]: https://travis-ci.org/denofevil/debase
+
 = debase
+[![Gem Version](https://badge.fury.io/rb/debase)][gem]
+[![Build Status](https://secure.travis-ci.org/denofevil/debase.png)][travis]
 
 == Overview
 
