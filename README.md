@@ -2,7 +2,7 @@
 [travis]: https://travis-ci.org/denofevil/debase
 
 = debase
-[![Gem Version](https://badge.fury.io/rb/debase)][gem]
+[![Gem Version](https://badge.fury.io/rb/debase.png)][gem]
 [![Build Status](https://secure.travis-ci.org/denofevil/debase.png)][travis]
 
 == Overview
