@@ -5,7 +5,7 @@ static VALUE mDebase;                 /* Ruby Debase Module object */
 static VALUE cContext;
 static VALUE cDebugThread;
 
-static VALUE debug = Qfalse;
+static VALUE verbose = Qfalse;
 static VALUE locker = Qnil;
 static VALUE contexts;
 static VALUE catchpoints;
@@ -133,7 +133,7 @@ print_event(rb_trace_point_t *tp, debug_context_t *context)
   VALUE rb_cl_name;
   const char *defined_class;
 
-  if (debug == Qtrue) {
+  if (verbose == Qtrue) {
     path = rb_tracearg_path(tp);
     line = rb_tracearg_lineno(tp);
     event = rb_tracearg_event(tp);
@@ -473,6 +473,32 @@ Debase_started(VALUE self)
 {
   return catchpoints != Qnil ? Qtrue : Qfalse; 
 }
+
+/*
+ *  call-seq:
+ *    Debase.verbose? -> bool
+ *
+ *  Returns +true+ if verbose output of TracePoint API events is enabled.
+ */
+static VALUE
+Debase_verbose(VALUE self)
+{
+  return verbose;
+}
+
+/*
+ *  call-seq:
+ *    Debase.verbose = bool
+ *
+ *  Enable verbose output of every TracePoint API events, useful for debugging debase.
+ */
+static VALUE
+Debase_set_verbose(VALUE self, VALUE value)
+{
+  verbose = RTEST(value) ? Qtrue : Qfalse;
+  return value;
+}
+
 /*
  *   Document-class: Debase
  *
@@ -493,6 +519,8 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "breakpoints", Debase_breakpoints, 0);
   rb_define_module_function(mDebase, "catchpoints", Debase_catchpoints, 0);
   rb_define_module_function(mDebase, "started?", Debase_started, 0);
+  rb_define_module_function(mDebase, "verbose?", Debase_verbose, 0);
+  rb_define_module_function(mDebase, "verbose=", Debase_set_verbose, 1);
 
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");
