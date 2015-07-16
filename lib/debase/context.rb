@@ -5,12 +5,14 @@ module Debase
       binding = frame_binding(frame_no)
       locals = eval("local_variables", binding)
       if locals.respond_to?(:each)
-        locals.each {|local| result[local.to_s] = eval(local.to_s, binding)}
+        locals.each do |local|
+          result[local.to_s] = safe_eval(local.to_s, binding)
+        end
       else
-        result[locals.to_s] = eval(locals.to_s, binding)
+        result[locals.to_s] = safe_eval(locals.to_s, binding)
       end
       result
-    end  
+    end
 
     def frame_class(frame_no=0)
       frame_self(frame_no).class
@@ -44,5 +46,16 @@ module Debase
     def at_return(file, line)
       handler.at_return(self, file, line)
     end
+
+    private
+
+    def safe_eval(expr, binding)
+      begin
+        eval(expr, binding)
+      rescue => e
+        "*Evaluation error: '#{e}'"
+      end
+    end
+
   end
 end
