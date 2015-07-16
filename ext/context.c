@@ -24,7 +24,7 @@ Context_thnum(VALUE self) {
 }
 
 static inline void
-fill_frame(debug_frame_t *frame, char* file, int line, VALUE binding, VALUE self)
+fill_frame(debug_frame_t *frame, const char* file, int line, VALUE binding, VALUE self)
 { 
   frame->file = file;
   frame->line = line;
@@ -39,7 +39,7 @@ fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
   VALUE location;
   VALUE path;
   VALUE lineno;
-  char *file;
+  const char *file;
   int line;
   int stack_size;
   int i;

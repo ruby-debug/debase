@@ -33,7 +33,7 @@ typedef enum {CTX_STOP_NONE, CTX_STOP_STEP, CTX_STOP_BREAKPOINT, CTX_STOP_CATCHP
 typedef struct debug_frame_t
 {
     struct debug_frame_t *prev;
-    char *file;
+    const char *file;
     int line;
     VALUE binding;
     VALUE self;
