@@ -37,7 +37,7 @@ Debase_thread_context(VALUE self, VALUE thread)
 static VALUE
 Debase_current_context(VALUE self)
 {
-  return Debase_thread_context(self, rb_thread_current());	
+  return Debase_thread_context(self, rb_thread_current());
 }
 
 static int
