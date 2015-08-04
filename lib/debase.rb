@@ -67,8 +67,43 @@ module Debase
       # not sure why we need this so let's return nil for now ;)
       nil
     end
+
+    def file_filter
+      @file_filter ||= FileFilter.new
+    end
   end
-  
+
+  class FileFilter
+    def initialize
+      @enabled = false
+    end
+
+    def include(file_path)
+      included << file_path unless excluded.delete(file_path)
+    end
+
+    def exclude(file_path)
+      excluded << file_path unless included.delete(file_path)
+    end
+
+    def enable
+      @enabled = true
+    end
+
+    def disable
+      @enabled = false
+    end
+
+    private
+    def included
+      @included ||= []
+    end
+
+    def excluded
+      @excluded ||= []
+    end
+  end
+
   class DebugThread < Thread
     def self.inherited
       raise RuntimeError.new("Can't inherit Debugger::DebugThread class")
