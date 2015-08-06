@@ -94,6 +94,11 @@ module Debase
       @enabled = false
     end
 
+    def accept?(file_path)
+      return true unless @enabled
+      included.any? { |path| file_path.start_with?(path) } && excluded.all? { |path| !file_path.start_with?(path)}
+    end
+
     private
     def included
       @included ||= []

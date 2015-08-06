@@ -20,6 +20,15 @@ static VALUE idAlive;
 static VALUE idAtLine;
 static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
+static VALUE idFileFilter;
+static VALUE idAccept;
+
+static VALUE
+is_path_accepted(VALUE path) {
+  VALUE filter;
+  filter = rb_funcall(mDebase, idFileFilter, 0, NULL);
+  return rb_funcall(filter, idAccept, 1, path);
+}
 
 static VALUE
 Debase_thread_context(VALUE self, VALUE thread)
@@ -223,52 +232,53 @@ process_line_event(VALUE trace_point, void *data)
 
   tp = TRACE_POINT;
   path = rb_tracearg_path(tp);
-  lineno = rb_tracearg_lineno(tp);
-  file = RSTRING_PTR(path);
-  line = FIX2INT(lineno);
 
-  update_stack_size(context);
-  print_event(tp, context);
+  if (is_path_accepted(path)) {
+    lineno = rb_tracearg_lineno(tp);
+    file = RSTRING_PTR(path);
+    line = FIX2INT(lineno);
 
-  if (context->thread_pause)
-  {
-    context->stop_next = 1;
-    context->dest_frame = -1;
-    moved = 1;
-  }
-  else
-  {
-    moved = context->last_line != line || context->last_file == NULL ||
-            strcmp(context->last_file, file) != 0;
-  }
+    update_stack_size(context);
+    print_event(tp, context);
 
-  if (context->dest_frame == -1 || context->calced_stack_size == context->dest_frame)
-  {
-      if(moved || !CTX_FL_TEST(context, CTX_FL_FORCE_MOVE))
-          context->stop_next--;
-      if(context->stop_next < 0)
-          context->stop_next = -1;
-      if(moved || (CTX_FL_TEST(context, CTX_FL_STEPPED) && !CTX_FL_TEST(context, CTX_FL_FORCE_MOVE)))
-      {
-          context->stop_line--;
-          CTX_FL_UNSET(context, CTX_FL_STEPPED);
-      }
-  }
-  else if(context->calced_stack_size < context->dest_frame)
-  {
-      context->stop_next = 0;
-  }
-
-  breakpoint = breakpoint_find(breakpoints, path, lineno);
-  if(context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
-    rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
-    context->stop_reason = CTX_STOP_STEP;
-    if (breakpoint != Qnil) {
-      context->stop_reason = CTX_STOP_BREAKPOINT;
-      rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
+    if (context->thread_pause) {
+      context->stop_next = 1;
+      context->dest_frame = -1;
+      moved = 1;
     }
-    reset_stepping_stop_points(context);
-    call_at_line(context, file, line, context_object);
+    else {
+      moved = context->last_line != line || context->last_file == NULL ||
+              strcmp(context->last_file, file) != 0;
+    }
+
+    if (context->dest_frame == -1 || context->calced_stack_size == context->dest_frame)
+    {
+      if (moved || !CTX_FL_TEST(context, CTX_FL_FORCE_MOVE))
+        context->stop_next--;
+      if (context->stop_next < 0)
+        context->stop_next = -1;
+      if (moved || (CTX_FL_TEST(context, CTX_FL_STEPPED) && !CTX_FL_TEST(context, CTX_FL_FORCE_MOVE)))
+      {
+        context->stop_line--;
+        CTX_FL_UNSET(context, CTX_FL_STEPPED);
+      }
+    }
+    else if(context->calced_stack_size < context->dest_frame)
+    {
+      context->stop_next = 0;
+    }
+
+    breakpoint = breakpoint_find(breakpoints, path, lineno);
+    if (context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
+      rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
+      context->stop_reason = CTX_STOP_STEP;
+      if (breakpoint != Qnil) {
+        context->stop_reason = CTX_STOP_BREAKPOINT;
+        rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
+      }
+      reset_stepping_stop_points(context);
+      call_at_line(context, file, line, context_object);
+    }
   }
   cleanup(context);
 }
@@ -337,20 +347,22 @@ process_raise_event(VALUE trace_point, void *data)
   if (catchpoint_hit_count(catchpoints, rb_tracearg_raised_exception(tp), &exception_name) != Qnil) {
     rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
     path = rb_tracearg_path(tp);
-    lineno = rb_tracearg_lineno(tp);
-    file = RSTRING_PTR(path);
-    line = FIX2INT(lineno);
 
-    /* On 64-bit systems with gcc and -O2 there seems to be
-       an optimization bug in running INT2FIX(FIX2INT...)..)
-       So we do this in two steps.
-      */
-    c_hit_count = FIX2INT(rb_hash_aref(catchpoints, exception_name)) + 1;
-    hit_count = INT2FIX(c_hit_count);
-    rb_hash_aset(catchpoints, exception_name, hit_count);
-    context->stop_reason = CTX_STOP_CATCHPOINT;
-    rb_funcall(context_object, idAtCatchpoint, 1, rb_tracearg_raised_exception(tp));
-    call_at_line(context, file, line, context_object);
+    if (is_path_accepted(path) == Qtrue) {
+      lineno = rb_tracearg_lineno(tp);
+      file = RSTRING_PTR(path);
+      line = FIX2INT(lineno);
+      /* On 64-bit systems with gcc and -O2 there seems to be
+         an optimization bug in running INT2FIX(FIX2INT...)..)
+         So we do this in two steps.
+        */
+      c_hit_count = FIX2INT(rb_hash_aref(catchpoints, exception_name)) + 1;
+      hit_count = INT2FIX(c_hit_count);
+      rb_hash_aset(catchpoints, exception_name, hit_count);
+      context->stop_reason = CTX_STOP_CATCHPOINT;
+      rb_funcall(context_object, idAtCatchpoint, 1, rb_tracearg_raised_exception(tp));
+      call_at_line(context, file, line, context_object);
+    }
   }
 
   cleanup(context);
@@ -526,6 +538,8 @@ Init_debase_internals()
   idAtLine = rb_intern("at_line");
   idAtBreakpoint = rb_intern("at_breakpoint");
   idAtCatchpoint = rb_intern("at_catchpoint");
+  idFileFilter = rb_intern("file_filter");
+  idAccept = rb_intern("accept?");
 
   cContext = Init_context(mDebase);
   Init_breakpoint(mDebase);
