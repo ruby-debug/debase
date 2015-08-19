@@ -96,6 +96,7 @@ module Debase
 
     def accept?(file_path)
       return true unless @enabled
+      return false if file_path.nil?
       included.any? { |path| file_path.start_with?(path) } && excluded.all? { |path| !file_path.start_with?(path)}
     end
 
