@@ -48,6 +48,17 @@ module Debase
 
     def add_catchpoint(exception)
       catchpoints[exception] = 0
+      tp_raise.enable
+    end
+
+    def remove_catchpoint(exception)
+      catchpoints.delete(exception)
+      tp_raise.disable if catchpoints.empty?
+    end
+
+    def clear_catchpoints
+      catchpoints.clear
+      tp_raise.disable
     end
 
     #call-seq:

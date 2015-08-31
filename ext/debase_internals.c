@@ -385,7 +385,6 @@ Debase_setup_tracepoints(VALUE self)
                              process_call_event, NULL);
   rb_tracepoint_enable(tpCall);
   tpRaise = rb_tracepoint_new(Qnil, RUBY_EVENT_RAISE, process_raise_event, NULL);
-  rb_tracepoint_enable(tpRaise);
   Debase_current_context(self);
 
   return Qnil;
@@ -512,6 +511,18 @@ Debase_set_verbose(VALUE self, VALUE value)
 }
 
 /*
+ *  call-seq:
+ *    Debase.tp_raise -> TracePoint
+ *
+ *  Returns trace point we use to track :raise events
+ */
+static VALUE
+Debase_get_tp_raise(VALUE self)
+{
+  return tpRaise;
+}
+
+/*
  *   Document-class: Debase
  *
  *   == Summary
@@ -530,6 +541,7 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "contexts", Debase_contexts, 0);
   rb_define_module_function(mDebase, "breakpoints", Debase_breakpoints, 0);
   rb_define_module_function(mDebase, "catchpoints", Debase_catchpoints, 0);
+  rb_define_module_function(mDebase, "tp_raise", Debase_get_tp_raise, 0);
   rb_define_module_function(mDebase, "started?", Debase_started, 0);
   rb_define_module_function(mDebase, "verbose?", Debase_verbose, 0);
   rb_define_module_function(mDebase, "verbose=", Debase_set_verbose, 1);
