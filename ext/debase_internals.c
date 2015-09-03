@@ -24,7 +24,7 @@ static VALUE idFileFilter;
 static VALUE idAccept;
 
 static void
-print_debug(const char const *message, ...)
+print_debug(const char *message, ...)
 {
   va_list ap;
 
@@ -510,7 +510,10 @@ debase_prepare_context(VALUE self, VALUE file, VALUE stop)
   context_object = Debase_current_context(self);
   Data_Get_Struct(context_object, debug_context_t, context);
 
-  if(RTEST(stop)) context->stop_next = 1;
+  if(RTEST(stop)) {
+    context->stop_next = 1;
+    Debase_enable_trace_points(self);
+  }
   ruby_script(RSTRING_PTR(file));
   return self;
 }
