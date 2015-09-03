@@ -72,7 +72,7 @@ set_recalc_flag(VALUE thread, VALUE context_object, VALUE ignored)
 }
 
 static int
-can_disable_trace_point(VALUE thread, VALUE context_object, VALUE result)
+can_disable_trace_points(VALUE thread, VALUE context_object, VALUE result)
 {
   debug_context_t *context;
 
@@ -104,7 +104,7 @@ try_disable_trace_points()
   if (rb_tracepoint_enabled_p(tpLine) == Qfalse) return;
   print_debug("disable_tps: tps are enabled\n");
 
-  rb_hash_foreach(contexts, can_disable_trace_point, (VALUE)&can_disable);
+  rb_hash_foreach(contexts, can_disable_trace_points, (VALUE)&can_disable);
   if (can_disable == Qfalse) return;
   print_debug("disable_tps: can disable contexts\n");
 
@@ -467,12 +467,15 @@ Debase_setup_tracepoints(VALUE self)
 
   tpLine = rb_tracepoint_new(Qnil, RUBY_EVENT_LINE, process_line_event, NULL);
   rb_global_variable(&tpLine);
+
   tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_END,
                                process_return_event, NULL);
   rb_global_variable(&tpReturn);
+
   tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_B_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_CLASS,
                              process_call_event, NULL);
   rb_global_variable(&tpCall);
+
   tpRaise = rb_tracepoint_new(Qnil, RUBY_EVENT_RAISE, process_raise_event, NULL);
   rb_global_variable(&tpRaise);
 
