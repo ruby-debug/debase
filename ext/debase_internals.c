@@ -23,6 +23,17 @@ static VALUE idAtCatchpoint;
 static VALUE idFileFilter;
 static VALUE idAccept;
 
+static void
+print_debug(const char const *message, ...)
+{
+  va_list ap;
+
+  if (verbose == Qfalse) return;
+  va_start(ap, message);
+  vfprintf(stderr, message, ap);
+  va_end(ap);
+}
+
 static VALUE
 is_path_accepted(VALUE path) {
   VALUE filter;
@@ -50,6 +61,75 @@ Debase_current_context(VALUE self)
 }
 
 static int
+set_recalc_flag(VALUE thread, VALUE context_object, VALUE ignored)
+{
+  debug_context_t *context;
+
+  Data_Get_Struct(context_object, debug_context_t, context);
+  CTX_FL_SET(context, CTX_FL_UPDATE_STACK);
+
+  return ST_CONTINUE;
+}
+
+static int
+can_disable_trace_point(VALUE thread, VALUE context_object, VALUE result)
+{
+  debug_context_t *context;
+
+  Data_Get_Struct(context_object, debug_context_t, context);
+
+  if (-1 != context->dest_frame
+      || context->stop_line >= 0
+      || -1 != context->stop_next
+      || context->stop_reason != CTX_STOP_NONE)
+  {
+    print_debug("can_disable_tp: %d %d %d %d\n", context->dest_frame, context->stop_line,
+                                                 context->stop_next, context->stop_reason);
+    *((VALUE *) result) = Qfalse;
+    return ST_STOP;
+  }
+  return ST_CONTINUE;
+}
+
+static void
+try_disable_trace_points()
+{
+  VALUE can_disable = Qtrue;
+
+  if (RARRAY_LEN(breakpoints) != 0) return;
+  print_debug("disable_tps: no breakpoints\n");
+  if (FIX2INT(rb_hash_size(catchpoints)) != 0) return;
+  print_debug("disable_tps: no catchpoints\n");
+  if (rb_tracepoint_enabled_p(tpLine) == Qfalse) return;
+  print_debug("disable_tps: tps are enabled\n");
+
+  rb_hash_foreach(contexts, can_disable_trace_point, (VALUE)&can_disable);
+  if (can_disable == Qfalse) return;
+  print_debug("disable_tps: can disable contexts\n");
+
+  rb_tracepoint_disable(tpLine);
+  rb_tracepoint_disable(tpCall);
+  rb_tracepoint_disable(tpReturn);
+  rb_tracepoint_disable(tpRaise);
+  rb_hash_foreach(contexts, set_recalc_flag, 0);
+}
+
+static VALUE
+Debase_enable_trace_points(VALUE self)
+{
+  print_debug("enable_tps: \n");
+  if (rb_tracepoint_enabled_p(tpLine) == Qtrue) return Qtrue;
+  print_debug("enable_tps: need to enable\n");
+
+  rb_tracepoint_enable(tpLine);
+  rb_tracepoint_enable(tpCall);
+  rb_tracepoint_enable(tpReturn);
+  rb_tracepoint_enable(tpRaise);
+
+  return Qfalse;
+}
+
+static int
 remove_dead_threads(VALUE thread, VALUE context, VALUE ignored)
 {
   return (IS_THREAD_ALIVE(thread)) ? ST_CONTINUE : ST_DELETE;
@@ -71,6 +151,8 @@ cleanup(debug_context_t *context)
   thread = remove_from_locked();
   if(thread != Qnil)
     rb_thread_run(thread);
+
+  try_disable_trace_points();
 }
 
 static int
@@ -377,15 +459,11 @@ Debase_setup_tracepoints(VALUE self)
   catchpoints = rb_hash_new();
 
   tpLine = rb_tracepoint_new(Qnil, RUBY_EVENT_LINE, process_line_event, NULL);
-  rb_tracepoint_enable(tpLine);
-  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_END, 
+  tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_END,
                                process_return_event, NULL);
-  rb_tracepoint_enable(tpReturn);
-  tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_B_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_CLASS, 
+  tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_B_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_CLASS,
                              process_call_event, NULL);
-  rb_tracepoint_enable(tpCall);
   tpRaise = rb_tracepoint_new(Qnil, RUBY_EVENT_RAISE, process_raise_event, NULL);
-  Debase_current_context(self);
 
   return Qnil;
 }
@@ -511,18 +589,6 @@ Debase_set_verbose(VALUE self, VALUE value)
 }
 
 /*
- *  call-seq:
- *    Debase.tp_raise -> TracePoint
- *
- *  Returns trace point we use to track :raise events
- */
-static VALUE
-Debase_get_tp_raise(VALUE self)
-{
-  return tpRaise;
-}
-
-/*
  *   Document-class: Debase
  *
  *   == Summary
@@ -541,10 +607,10 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "contexts", Debase_contexts, 0);
   rb_define_module_function(mDebase, "breakpoints", Debase_breakpoints, 0);
   rb_define_module_function(mDebase, "catchpoints", Debase_catchpoints, 0);
-  rb_define_module_function(mDebase, "tp_raise", Debase_get_tp_raise, 0);
   rb_define_module_function(mDebase, "started?", Debase_started, 0);
   rb_define_module_function(mDebase, "verbose?", Debase_verbose, 0);
   rb_define_module_function(mDebase, "verbose=", Debase_set_verbose, 1);
+  rb_define_module_function(mDebase, "enable_trace_points", Debase_enable_trace_points, 0);
 
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");
