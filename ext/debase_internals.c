@@ -81,7 +81,8 @@ can_disable_trace_point(VALUE thread, VALUE context_object, VALUE result)
   if (-1 != context->dest_frame
       || context->stop_line >= 0
       || -1 != context->stop_next
-      || context->stop_reason != CTX_STOP_NONE)
+      || context->stop_reason != CTX_STOP_NONE
+      || context->thread_pause != 0)
   {
     print_debug("can_disable_tp: %d %d %d %d\n", context->dest_frame, context->stop_line,
                                                  context->stop_next, context->stop_reason);
@@ -114,8 +115,8 @@ try_disable_trace_points()
   rb_hash_foreach(contexts, set_recalc_flag, 0);
 }
 
-static VALUE
-Debase_enable_trace_points(VALUE self)
+extern VALUE
+enable_trace_points()
 {
   print_debug("enable_tps: \n");
   if (rb_tracepoint_enabled_p(tpLine) == Qtrue) return Qtrue;
@@ -127,6 +128,12 @@ Debase_enable_trace_points(VALUE self)
   rb_tracepoint_enable(tpRaise);
 
   return Qfalse;
+}
+
+static VALUE
+Debase_enable_trace_points(VALUE self)
+{
+  return enable_trace_points();
 }
 
 static int

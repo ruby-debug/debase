@@ -273,6 +273,7 @@ Context_pause(VALUE self)
     return Qfalse;
   }
 
+  enable_trace_points();
   context->thread_pause = 1;
   return Qtrue;
 }

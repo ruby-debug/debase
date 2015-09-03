@@ -89,6 +89,7 @@ typedef struct locked_thread_t {
 extern int is_in_locked(VALUE thread_id);
 extern void add_to_locked(VALUE thread);
 extern VALUE remove_from_locked();
+extern VALUE enable_trace_points();
 
 /* breakpoints and catchpoints */
 /* types */
