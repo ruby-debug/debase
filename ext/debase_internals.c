@@ -466,11 +466,15 @@ Debase_setup_tracepoints(VALUE self)
   catchpoints = rb_hash_new();
 
   tpLine = rb_tracepoint_new(Qnil, RUBY_EVENT_LINE, process_line_event, NULL);
+  rb_global_variable(&tpLine);
   tpReturn = rb_tracepoint_new(Qnil, RUBY_EVENT_RETURN | RUBY_EVENT_B_RETURN | RUBY_EVENT_C_RETURN | RUBY_EVENT_END,
                                process_return_event, NULL);
+  rb_global_variable(&tpReturn);
   tpCall = rb_tracepoint_new(Qnil, RUBY_EVENT_CALL | RUBY_EVENT_B_CALL | RUBY_EVENT_C_CALL | RUBY_EVENT_CLASS,
                              process_call_event, NULL);
+  rb_global_variable(&tpCall);
   tpRaise = rb_tracepoint_new(Qnil, RUBY_EVENT_RAISE, process_raise_event, NULL);
+  rb_global_variable(&tpRaise);
 
   return Qnil;
 }
