@@ -333,12 +333,12 @@ Context_stop_frame(VALUE self, VALUE frame)
   debug_context_t *debug_context;
 
   Data_Get_Struct(self, debug_context_t, debug_context);
-  if(FIX2INT(frame) < 0 && FIX2INT(frame) >= debug_context->stack_size)
+  if(FIX2INT(frame) < 0 && FIX2INT(frame) >= debug_context->calced_stack_size)
     rb_raise(rb_eRuntimeError, "Stop frame is out of range.");
   /* we decrease stack size by frame and 1 because we use stop_frame after
      updating stack size.  If that code will be changed this should be changed accordingly.
    */
-  debug_context->stop_frame = debug_context->stack_size - FIX2INT(frame) - 1;
+  debug_context->stop_frame = debug_context->calced_stack_size - FIX2INT(frame) - 1;
 
   return frame;
 }
