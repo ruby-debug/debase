@@ -12,6 +12,8 @@ class TestRubyDebug < Test::Unit::TestCase
     assert_equal(false, Debugger.started?, 
                  'debugger should not initially be started.')
     Debugger.start_
+    # we need to add the breakpoint to force enabling trace points
+    Debugger.add_breakpoint(__FILE__, 1)
     assert(Debugger.started?, 
            'debugger should now be started.')
     # assert_equal(__LINE__, Debugger.current_context.frame_line)
@@ -37,6 +39,8 @@ class TestRubyDebug < Test::Unit::TestCase
     assert_equal(false, Debugger.started?, 
                  'Debugger should not initially be started.')
     Debugger.start_
+    # we need to add the breakpoint to force enabling trace points
+    Debugger.add_breakpoint(__FILE__, 1)
     assert(Debugger.started?, 
            'Debugger should now be started.')
     assert_equal(false, Debugger.debug,

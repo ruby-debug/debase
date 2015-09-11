@@ -18,6 +18,7 @@ typedef struct rb_trace_arg_struct rb_trace_point_t;
 #define CTX_FL_STEPPED      (1<<8)
 #define CTX_FL_FORCE_MOVE   (1<<9)
 #define CTX_FL_CATCHING     (1<<10)
+#define CTX_FL_UPDATE_STACK (1<<11)
 
 /* macro functions */
 #define CTX_FL_TEST(c,f)  ((c)->flags & (f))
@@ -88,6 +89,7 @@ typedef struct locked_thread_t {
 extern int is_in_locked(VALUE thread_id);
 extern void add_to_locked(VALUE thread);
 extern VALUE remove_from_locked();
+extern VALUE enable_trace_points();
 
 /* breakpoints and catchpoints */
 /* types */

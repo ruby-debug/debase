@@ -29,6 +29,7 @@ module Debase
     def add_breakpoint(file, line, expr=nil)
       breakpoint = Breakpoint.new(file, line, expr)
       breakpoints << breakpoint
+      enable_trace_points
       breakpoint
     end
 
@@ -48,17 +49,15 @@ module Debase
 
     def add_catchpoint(exception)
       catchpoints[exception] = 0
-      tp_raise.enable
+      enable_trace_points
     end
 
     def remove_catchpoint(exception)
       catchpoints.delete(exception)
-      tp_raise.disable if catchpoints.empty?
     end
 
     def clear_catchpoints
       catchpoints.clear
-      tp_raise.disable
     end
 
     #call-seq:
