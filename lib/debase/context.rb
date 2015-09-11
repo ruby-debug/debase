@@ -1,17 +1,9 @@
 module Debase
   class Context
     def frame_locals(frame_no=0)
-      result = {}
-      binding = frame_binding(frame_no)
-      locals = eval("local_variables", binding)
-      if locals.respond_to?(:each)
-        locals.each do |local|
-          result[local.to_s] = safe_eval(local.to_s, binding)
-        end
-      else
-        result[locals.to_s] = safe_eval(locals.to_s, binding)
-      end
-      result
+      frame_binding(frame_no).eval('local_variables.inject({}){|h, v| h[v.to_s] = eval(v.to_s); h}')
+    rescue => e
+      {'debase-debug' => "*Evaluation error: '#{e}'" }
     end
 
     def frame_class(frame_no=0)
@@ -46,16 +38,5 @@ module Debase
     def at_return(file, line)
       handler.at_return(self, file, line)
     end
-
-    private
-
-    def safe_eval(expr, binding)
-      begin
-        eval(expr, binding)
-      rescue => e
-        "*Evaluation error: '#{e}'"
-      end
-    end
-
   end
 end
