@@ -29,7 +29,7 @@ fill_frame(debug_frame_t *frame, const char* file, int line, VALUE binding, VALU
   frame->file = file;
   frame->line = line;
   frame->binding = binding;
-  frame->self = self;  
+  frame->self = self;
 }
 
 extern void 
@@ -45,7 +45,7 @@ fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
   int i;
 
   locations = rb_debug_inspector_backtrace_locations(inspector);
-  stack_size = locations == Qnil ? 0 : (int)RARRAY_LEN(locations);
+  stack_size = locations == Qnil ? 0 : RARRAY_LENINT(locations);
   context->stack_size = stack_size;
 
   for (i = 0; i < stack_size; i++) {
@@ -138,7 +138,7 @@ context_create(VALUE thread, VALUE cDebugThread) {
   context = ALLOC(debug_context_t);
   context->stack_size = 0;
   locations = rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
-  context->calced_stack_size = locations != Qnil ? (int)RARRAY_LEN(locations) : 0;
+  context->calced_stack_size = locations != Qnil ? RARRAY_LENINT(locations) : 0;
   context->stack = NULL;
   context->thnum = ++thnum_current;
   context->thread = thread;

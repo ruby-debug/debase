@@ -162,7 +162,7 @@ print_event(rb_trace_point_t *tp, debug_context_t *context)
     locations = rb_funcall(context->thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
     fprintf(stderr, "    calced_stack_size=%d, stack_size=%d, real_stack_size=%d\n",
             context->calced_stack_size, context->stack_size,
-            locations != Qnil ? (int)RARRAY_LEN(locations) : 0);
+            locations != Qnil ? RARRAY_LENINT(locations) : 0);
   }
 }
 

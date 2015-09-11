@@ -26,7 +26,7 @@ catchpoint_hit_count(VALUE catchpoints, VALUE exception, VALUE *exception_name) 
     return Qnil;
   expn_class = rb_obj_class(exception);
   ancestors = rb_mod_ancestors(expn_class);
-  for(i = 0; i < RARRAY_LEN(ancestors); i++)
+  for(i = 0; i < RARRAY_LENINT(ancestors); i++)
   {
     aclass    = rb_ary_entry(ancestors, i);
     mod_name  = rb_mod_name(aclass);
@@ -83,7 +83,7 @@ Breakpoint_remove(VALUE self, VALUE breakpoints, VALUE id_value)
 
   id = FIX2INT(id_value);
 
-  for(i = 0; i < RARRAY_LEN(breakpoints); i++)
+  for(i = 0; i < RARRAY_LENINT(breakpoints); i++)
   {
     breakpoint_object = rb_ary_entry(breakpoints, i);
     Data_Get_Struct(breakpoint_object, breakpoint_t, breakpoint);
@@ -207,7 +207,7 @@ breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos)
 
   file = RSTRING_PTR(source);
   line = FIX2INT(pos);
-  for(i = 0; i < RARRAY_LEN(breakpoints); i++)
+  for(i = 0; i < RARRAY_LENINT(breakpoints); i++)
   {
     breakpoint_object = rb_ary_entry(breakpoints, i);
     if (check_breakpoint_by_pos(breakpoint_object, file, line))
