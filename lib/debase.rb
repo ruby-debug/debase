@@ -98,10 +98,12 @@ module Debase
 
     def enable
       @enabled = true
+      Debase.enable_file_filtering(@enabled);
     end
 
     def disable
       @enabled = false
+      Debase.enable_file_filtering(@enabled);
     end
 
     def accept?(file_path)

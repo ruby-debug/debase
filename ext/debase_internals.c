@@ -10,6 +10,7 @@ static VALUE locker = Qnil;
 static VALUE contexts;
 static VALUE catchpoints;
 static VALUE breakpoints;
+static VALUE file_filter_enabled = Qfalse;
 
 static VALUE tpLine;
 static VALUE tpCall;
@@ -37,6 +38,7 @@ print_debug(const char *message, ...)
 static VALUE
 is_path_accepted(VALUE path) {
   VALUE filter;
+  if (file_filter_enabled == Qfalse) return Qtrue;
   filter = rb_funcall(mDebase, idFileFilter, 0, NULL);
   return rb_funcall(filter, idAccept, 1, path);
 }
@@ -606,6 +608,19 @@ Debase_set_verbose(VALUE self, VALUE value)
 }
 
 /*
+ *  call-seq:
+ *    Debase.enable_file_filtering(bool)
+ *
+ *  Enables/disables file filtering.
+ */
+static VALUE
+Debase_enable_file_filtering(VALUE self, VALUE value)
+{
+  file_filter_enabled = RTEST(value) ? Qtrue : Qfalse;
+  return value;
+}
+
+/*
  *   Document-class: Debase
  *
  *   == Summary
@@ -627,6 +642,7 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "started?", Debase_started, 0);
   rb_define_module_function(mDebase, "verbose?", Debase_verbose, 0);
   rb_define_module_function(mDebase, "verbose=", Debase_set_verbose, 1);
+  rb_define_module_function(mDebase, "enable_file_filtering", Debase_enable_file_filtering, 1);
   rb_define_module_function(mDebase, "enable_trace_points", Debase_enable_trace_points, 0);
 
   idAlive = rb_intern("alive?");
