@@ -99,7 +99,7 @@ try_disable_trace_points()
 
   if (RARRAY_LEN(breakpoints) != 0) return;
   print_debug("disable_tps: no breakpoints\n");
-  if (RHASH_EMPTY_P(catchpoints)) return;
+  if (!RHASH_EMPTY_P(catchpoints)) return;
   print_debug("disable_tps: no catchpoints\n");
   if (rb_tracepoint_enabled_p(tpLine) == Qfalse) return;
   print_debug("disable_tps: tps are enabled\n");
