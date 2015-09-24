@@ -1,7 +1,7 @@
 module Debase
   class Context
     def frame_locals(frame_no=0)
-      frame_binding(frame_no).eval('local_variables.inject({}){|h, v| h[v.to_s] = eval(v.to_s); h}')
+      frame_binding(frame_no).eval('local_variables.inject({}){|__h, __v| __h[__v.to_s] = eval(__v.to_s); __h}')
     rescue => e
       {'debase-debug' => "*Evaluation error: '#{e}'" }
     end
