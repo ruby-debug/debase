@@ -358,6 +358,11 @@ process_line_event(VALUE trace_point, void *data)
     {
       context->stop_next = 0;
     }
+    if(context->calced_stack_size == context->stop_frame)
+    {
+      context->stop_next = 0;
+      context->stop_frame = -1;
+    }
 
     breakpoint = breakpoint_find(breakpoints, path, lineno);
     if (context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
