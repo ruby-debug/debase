@@ -5,6 +5,7 @@ require "debase/version"
 Gem::Specification.new do |s|
   s.name        = "debase"
   s.version     = Debase::VERSION
+  s.license     = "MIT"
   s.authors     = ["Dennis Ushakov"]
   s.email       = ["dennis.ushakov@gmail.com"]
   s.homepage    = "https://github.com/denofevil/debase"
