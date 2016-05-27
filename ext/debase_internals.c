@@ -35,6 +35,11 @@ print_debug(const char *message, ...)
   va_end(ap);
 }
 
+inline int
+check_stop_frame(debug_context_t *context) {
+  return context->calced_stack_size == context->stop_frame && context->calced_stack_size >= 0;
+}
+
 static VALUE
 is_path_accepted(VALUE path) {
   VALUE filter;
@@ -358,7 +363,7 @@ process_line_event(VALUE trace_point, void *data)
     {
       context->stop_next = 0;
     }
-    if(context->calced_stack_size == context->stop_frame)
+    if(check_stop_frame(context))
     {
       context->stop_next = 0;
       context->stop_frame = -1;
@@ -394,7 +399,7 @@ process_return_event(VALUE trace_point, void *data)
   /* it is important to check stop_frame after stack size updated
      if the order will be changed change Context_stop_frame accordingly.
   */
-  if(context->calced_stack_size == context->stop_frame)
+  if(check_stop_frame(context))
   {
     context->stop_next = 1;
     context->stop_frame = -1;
