@@ -219,9 +219,15 @@ breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos)
 }
 
 extern void
-Init_breakpoint(VALUE mDebase)
+breakpoint_init_variables()
 {
   breakpoint_max = 0;
+}
+
+extern void
+Init_breakpoint(VALUE mDebase)
+{
+  breakpoint_init_variables();
   cBreakpoint = rb_define_class_under(mDebase, "Breakpoint", rb_cObject);
   rb_define_singleton_method(cBreakpoint, "find", Breakpoint_find, 3);
   rb_define_singleton_method(cBreakpoint, "remove", Breakpoint_remove, 2);

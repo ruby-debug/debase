@@ -345,6 +345,12 @@ Context_stop_frame(VALUE self, VALUE frame)
   return frame;
 }
 
+extern void
+context_init_variables()
+{
+  thnum_current = 0;
+}
+
 /*
  *   Document-class: Context
  *
@@ -373,6 +379,7 @@ Init_context(VALUE mDebase)
   rb_define_method(cContext, "pause", Context_pause, 0);
 
   idAlive = rb_intern("alive?");
+  context_init_variables();
 
   return cContext;
     // rb_define_method(cContext, "suspend", context_suspend, 0);

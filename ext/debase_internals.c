@@ -24,6 +24,8 @@ static VALUE idAtCatchpoint;
 static VALUE idFileFilter;
 static VALUE idAccept;
 
+static int started = 0;
+
 static void
 print_debug(const char *message, ...)
 {
@@ -472,7 +474,9 @@ process_raise_event(VALUE trace_point, void *data)
 static VALUE
 Debase_setup_tracepoints(VALUE self)
 {
-  if (catchpoints != Qnil) return Qnil;
+  if (started) return Qnil;
+  started = 1;
+
   contexts = rb_hash_new();
   breakpoints = rb_ary_new();
   catchpoints = rb_hash_new();
@@ -496,19 +500,13 @@ Debase_setup_tracepoints(VALUE self)
 
 static VALUE
 Debase_remove_tracepoints(VALUE self)
-{ 
-  contexts = Qnil;
-  breakpoints = Qnil;
-  catchpoints = Qnil;
+{
+  started = 0;
 
   if (tpLine != Qnil) rb_tracepoint_disable(tpLine);
-  tpLine = Qnil;
   if (tpReturn != Qnil) rb_tracepoint_disable(tpReturn);
-  tpReturn = Qnil;
   if (tpCall != Qnil) rb_tracepoint_disable(tpCall);
-  tpCall = Qnil;
   if (tpRaise != Qnil) rb_tracepoint_disable(tpRaise);
-  tpRaise = Qnil;
 
   return Qnil;
 }
@@ -527,6 +525,14 @@ debase_prepare_context(VALUE self, VALUE file, VALUE stop)
     Debase_enable_trace_points(self);
   }
   ruby_script(RSTRING_PTR(file));
+  return self;
+}
+
+static VALUE
+Debase_prepare_context(VALUE self)
+{
+  Debase_current_context(self);
+
   return self;
 }
 
@@ -589,7 +595,7 @@ Debase_catchpoints(VALUE self)
 static VALUE
 Debase_started(VALUE self)
 {
-  return catchpoints != Qnil ? Qtrue : Qfalse; 
+  return started ? Qtrue : Qfalse;
 }
 
 /*
@@ -630,6 +636,21 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
   return value;
 }
 
+static void
+Debase_init_variables()
+{
+  started = 0;
+  verbose = Qfalse;
+  locker = Qnil;
+  file_filter_enabled = Qfalse;
+  contexts = Qnil;
+  catchpoints = Qnil;
+  breakpoints = Qnil;
+
+  context_init_variables();
+  breakpoint_init_variables();
+}
+
 /*
  *   Document-class: Debase
  *
@@ -654,6 +675,8 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "verbose=", Debase_set_verbose, 1);
   rb_define_module_function(mDebase, "enable_file_filtering", Debase_enable_file_filtering, 1);
   rb_define_module_function(mDebase, "enable_trace_points", Debase_enable_trace_points, 0);
+  rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 0);
+  rb_define_module_function(mDebase, "init_variables", Debase_init_variables, 0);
 
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");
@@ -665,9 +688,7 @@ Init_debase_internals()
   cContext = Init_context(mDebase);
   Init_breakpoint(mDebase);
   cDebugThread  = rb_define_class_under(mDebase, "DebugThread", rb_cThread);
-  contexts = Qnil;
-  catchpoints = Qnil;
-  breakpoints = Qnil;
+  Debase_init_variables();
 
   rb_global_variable(&locker);
   rb_global_variable(&breakpoints);
