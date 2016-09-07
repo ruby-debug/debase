@@ -13,6 +13,14 @@ task :clean do
     derived_files = Dir.glob(".o") + Dir.glob("*.so") + Dir.glob("*.bundle")
     rm derived_files unless derived_files.empty?
   end
+  cd "ext/attach" do
+    if File.exists?("Makefile")
+      sh "make clean"
+      rm  "Makefile"
+    end
+    derived_files = Dir.glob(".o") + Dir.glob("*.so") + Dir.glob("*.bundle")
+    rm derived_files unless derived_files.empty?
+  end
   if File.exists?('pkg')
     cd 'pkg' do
       derived_files = Dir.glob('*.gem')
@@ -24,6 +32,10 @@ end
 desc "Create the core debase shared library extension"
 task :lib => :clean do
   Dir.chdir("ext") do
+    system("#{Gem.ruby} extconf.rb && make")
+    exit $?.to_i if $?.to_i != 0
+  end
+  Dir.chdir("ext/attach") do
     system("#{Gem.ruby} extconf.rb && make")
     exit $?.to_i if $?.to_i != 0
   end
