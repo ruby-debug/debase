@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
-  s.extensions = ["ext/extconf.rb"]
+  s.extensions = ["ext/extconf.rb", "ext/attach/extconf.rb"]
 
   s.add_dependency "debase-ruby_core_source"
   s.add_development_dependency "test-unit"
