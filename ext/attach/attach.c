@@ -1,9 +1,14 @@
 #include "attach.h"
 
-// can not make it static because of empty function elimination optimization
-void
+/*
+We need to prevent compiler from optimizing this function calls. For more details
+see "noinline" section here: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
+*/
+static void
+__attribute__ ((noinline))
 __func_to_set_breakpoint_at()
 {
+    asm("");
 }
 
 static void
