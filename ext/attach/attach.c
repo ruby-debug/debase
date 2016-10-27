@@ -26,10 +26,16 @@ __catch_line_event(rb_event_flag_t evflag, VALUE data, VALUE self, ID mid, VALUE
 }
 
 int
-start_attach()
+debase_start_attach()
 {
     if (rb_during_gc())
         return 1;
     rb_add_event_hook(__catch_line_event, RUBY_EVENT_LINE, (VALUE) NULL);
     return 0;
+}
+
+void
+debase_rb_eval(const char *string_to_eval)
+{
+    rb_eval_string_protect(string_to_eval, NULL);
 }

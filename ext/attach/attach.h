@@ -4,6 +4,7 @@
 #include <ruby.h>
 #include <ruby/debug.h>
 
-int start_attach();
+int debase_start_attach();
+void debase_rb_eval();
 
 #endif //__ATTACH_H__
