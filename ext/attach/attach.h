@@ -5,6 +5,6 @@
 #include <ruby/debug.h>
 
 int debase_start_attach();
-void debase_rb_eval();
+void debase_rb_eval(const char *);
 
 #endif //__ATTACH_H__
