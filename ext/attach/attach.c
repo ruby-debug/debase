@@ -39,3 +39,13 @@ debase_rb_eval(const char *string_to_eval)
 {
     rb_eval_string_protect(string_to_eval, NULL);
 }
+
+void
+Init_attach()
+{
+  /*
+  The only purpose of this library is to be dlopen'ed inside
+  gdb/lldb. So no initialization here, you should directly
+  call functions above.
+  */
+}

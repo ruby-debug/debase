@@ -636,7 +636,7 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
   return value;
 }
 
-static void
+static VALUE
 Debase_init_variables()
 {
   started = 0;
@@ -649,6 +649,8 @@ Debase_init_variables()
 
   context_init_variables();
   breakpoint_init_variables();
+
+  return Qtrue;
 }
 
 /*
