@@ -6,7 +6,8 @@ class TestBreakpoints < Test::Unit::TestCase
   def test_find
     Debugger.start
     Debugger.add_breakpoint("foo.rb", 11, nil)
-    assert_not_nil(Debugger::Breakpoint.find(Debugger.breakpoints, "foo.rb", 11))
+    assert_nil(Debugger::Breakpoint.find(Debugger.breakpoints, "foo.rb", 11))
+    assert_not_nil(Debugger::Breakpoint.find(Debugger.unreachable_breakpoints['foo.rb'], 'foo.rb', 11))
     assert_nil(Debugger::Breakpoint.find(Debugger.breakpoints, "bar.rb", 11))
     assert_nil(Debugger::Breakpoint.find(Debugger.breakpoints, "foo.rb", 10))
     Debugger.stop

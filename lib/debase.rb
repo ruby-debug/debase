@@ -10,6 +10,7 @@ require 'set'
 module Debase
   class << self
     attr_accessor :handler
+    attr_reader :unreachable_breakpoints
 
     alias start_ setup_tracepoints
 
