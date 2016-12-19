@@ -125,7 +125,7 @@ module Debase
       @track_file_load = TracePoint.new(:c_call) do |tp|
         if [:require, :require_relative, :load].include? tp.method_id
           th = Thread.current
-          break if th == Debugger.control_thread
+          break if th.instance_of? DebugThread
           # enable tracing only for 1 line after load
           # just to get required file name
           th.set_trace_func proc { |event, file, _, _, _, _|
@@ -152,7 +152,7 @@ module Debase
         file_loaded File.expand_path(Debugger::PROG_SCRIPT)
 
         Thread.list.each do |th|
-          next if th == Debugger.control_thread
+          next if th.instance_of? DebugThread
           th.backtrace_locations.each do |location|
             file_loaded location.absolute_path
           end
