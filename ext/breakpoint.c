@@ -13,6 +13,14 @@
 static VALUE cBreakpoint;
 static int breakpoint_max;
 
+static ID idEval;
+
+static VALUE
+eval_expression(VALUE args)
+{
+  return rb_funcall2(rb_mKernel, idEval, 2, RARRAY_PTR(args));
+}
+
 extern VALUE
 catchpoint_hit_count(VALUE catchpoints, VALUE exception, VALUE *exception_name) {
   VALUE ancestors;
@@ -191,14 +199,31 @@ check_breakpoint_by_pos(VALUE breakpoint_object, char *file, int line)
     return 0;
 }
 
-static VALUE
-Breakpoint_find(VALUE self, VALUE breakpoints, VALUE source, VALUE pos)
+static int
+check_breakpoint_expr(VALUE breakpoint_object, VALUE binding)
 {
-  return breakpoint_find(breakpoints, source, pos);
+  breakpoint_t *breakpoint;
+  VALUE args, result;
+  int error;
+
+  if(breakpoint_object == Qnil) return 0;
+  Data_Get_Struct(breakpoint_object, breakpoint_t, breakpoint);
+  if (Qtrue != breakpoint->enabled) return 0;
+  if (NIL_P(breakpoint->expr) || NIL_P(binding)) return 1;
+
+  args = rb_ary_new3(2, breakpoint->expr, binding);
+  result = rb_protect(eval_expression, args, &error);
+  return !error && RTEST(result);
+}
+
+static VALUE
+Breakpoint_find(VALUE self, VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
+{
+  return breakpoint_find(breakpoints, source, pos, binding);
 }
 
 extern VALUE
-breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos)
+breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
 {
   VALUE breakpoint_object;
   char *file;
@@ -210,7 +235,8 @@ breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos)
   for(i = 0; i < RARRAY_LENINT(breakpoints); i++)
   {
     breakpoint_object = rb_ary_entry(breakpoints, i);
-    if (check_breakpoint_by_pos(breakpoint_object, file, line))
+    if (check_breakpoint_by_pos(breakpoint_object, file, line) &&
+      check_breakpoint_expr(breakpoint_object, binding))
     {
       return breakpoint_object;
     }
@@ -229,11 +255,13 @@ Init_breakpoint(VALUE mDebase)
 {
   breakpoint_init_variables();
   cBreakpoint = rb_define_class_under(mDebase, "Breakpoint", rb_cObject);
-  rb_define_singleton_method(cBreakpoint, "find", Breakpoint_find, 3);
+  rb_define_singleton_method(cBreakpoint, "find", Breakpoint_find, 4);
   rb_define_singleton_method(cBreakpoint, "remove", Breakpoint_remove, 2);
   rb_define_method(cBreakpoint, "initialize", Breakpoint_initialize, 3);
   rb_define_method(cBreakpoint, "id", Breakpoint_id, 0);
   rb_define_method(cBreakpoint, "source", Breakpoint_source, 0);
   rb_define_method(cBreakpoint, "pos", Breakpoint_pos, 0);
   rb_define_alloc_func(cBreakpoint, Breakpoint_create);
+
+  idEval = rb_intern("eval");
 }
