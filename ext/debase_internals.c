@@ -314,7 +314,6 @@ call_at_line(debug_context_t *context, char *file, int line, VALUE context_objec
 static void
 process_line_event(VALUE trace_point, void *data)
 {
-  VALUE binding;
   VALUE path;
   VALUE lineno;
   VALUE context_object;
@@ -330,7 +329,6 @@ process_line_event(VALUE trace_point, void *data)
   if (!check_start_processing(context, rb_thread_current())) return;
 
   tp = TRACE_POINT;
-  binding = rb_tracearg_binding(tp);
   path = rb_tracearg_path(tp);
 
   if (is_path_accepted(path)) {
@@ -373,7 +371,7 @@ process_line_event(VALUE trace_point, void *data)
       context->stop_frame = -1;
     }
 
-    breakpoint = breakpoint_find(breakpoints, path, lineno, binding);
+    breakpoint = breakpoint_find(breakpoints, path, lineno, trace_point);
     if (context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
       rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
       context->stop_reason = CTX_STOP_STEP;

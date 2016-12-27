@@ -200,16 +200,22 @@ check_breakpoint_by_pos(VALUE breakpoint_object, char *file, int line)
 }
 
 static int
-check_breakpoint_expr(VALUE breakpoint_object, VALUE binding)
+check_breakpoint_expr(VALUE breakpoint_object, VALUE trace_point)
 {
   breakpoint_t *breakpoint;
-  VALUE args, result;
+  VALUE binding, args, result;
   int error;
 
   if(breakpoint_object == Qnil) return 0;
   Data_Get_Struct(breakpoint_object, breakpoint_t, breakpoint);
   if (Qtrue != breakpoint->enabled) return 0;
-  if (NIL_P(breakpoint->expr) || NIL_P(binding)) return 1;
+  if (NIL_P(breakpoint->expr)) return 1;
+
+  if (NIL_P(trace_point)) {
+    binding = rb_const_get(rb_cObject, rb_intern("TOPLEVEL_BINDING"));
+  } else {
+    binding = rb_tracearg_binding(rb_tracearg_from_tracepoint(trace_point));
+  }
 
   args = rb_ary_new3(2, breakpoint->expr, binding);
   result = rb_protect(eval_expression, args, &error);
@@ -217,13 +223,13 @@ check_breakpoint_expr(VALUE breakpoint_object, VALUE binding)
 }
 
 static VALUE
-Breakpoint_find(VALUE self, VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
+Breakpoint_find(VALUE self, VALUE breakpoints, VALUE source, VALUE pos, VALUE trace_point)
 {
-  return breakpoint_find(breakpoints, source, pos, binding);
+  return breakpoint_find(breakpoints, source, pos, trace_point);
 }
 
 extern VALUE
-breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
+breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE trace_point)
 {
   VALUE breakpoint_object;
   char *file;
@@ -236,7 +242,7 @@ breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE binding)
   {
     breakpoint_object = rb_ary_entry(breakpoints, i);
     if (check_breakpoint_by_pos(breakpoint_object, file, line) &&
-      check_breakpoint_expr(breakpoint_object, binding))
+      check_breakpoint_expr(breakpoint_object, trace_point))
     {
       return breakpoint_object;
     }
