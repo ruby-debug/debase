@@ -371,7 +371,7 @@ process_line_event(VALUE trace_point, void *data)
       context->stop_frame = -1;
     }
 
-    breakpoint = breakpoint_find(breakpoints, path, lineno);
+    breakpoint = breakpoint_find(breakpoints, path, lineno, trace_point);
     if (context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
       rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
       context->stop_reason = CTX_STOP_STEP;

@@ -103,7 +103,7 @@ typedef struct
 } breakpoint_t;
 
 extern VALUE catchpoint_hit_count(VALUE catchpoints, VALUE exception, VALUE *exception_name);
-extern VALUE breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos);
+extern VALUE breakpoint_find(VALUE breakpoints, VALUE source, VALUE pos, VALUE trace_point);
 extern void Init_breakpoint(VALUE mDebase);
 
 extern void breakpoint_init_variables();
