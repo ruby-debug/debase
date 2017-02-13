@@ -1,15 +1,26 @@
 #include "attach.h"
 
+#ifndef __GNUC__
+#define __asm__ asm
+#endif
+
 /*
 We need to prevent compiler from optimizing this function calls. For more details
 see "noinline" section here: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html
 */
 static void
-__attribute__ ((noinline))
+#if defined(_MSC_VER)
+__declspec(noinline)
 __func_to_set_breakpoint_at()
 {
-    asm("");
 }
+#else
+__attribute__((noinline))
+__func_to_set_breakpoint_at()
+{
+    __asm__("");
+}
+#endif
 
 static void
 __catch_line_event(rb_event_flag_t evflag, VALUE data, VALUE self, ID mid, VALUE klass)
