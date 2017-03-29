@@ -134,11 +134,25 @@ extern VALUE
 context_create(VALUE thread, VALUE cDebugThread) {
   debug_context_t *context;
   VALUE locations;
+  VALUE location;
+  VALUE path;
+  VALUE lineno;
 
   context = ALLOC(debug_context_t);
   context->stack_size = 0;
   locations = rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
-  context->calced_stack_size = locations != Qnil ? RARRAY_LENINT(locations) : 0;
+  context->init_stack_size = context->calced_stack_size = locations != Qnil ? RARRAY_LENINT(locations) : 0;
+
+  context->init_stack_files = malloc(context->init_stack_size * sizeof(char*));
+  int i;
+  for (i = 0; i < context->init_stack_size; i++) {
+    location = rb_ary_entry(locations, i);
+    path = rb_funcall(location, rb_intern("path"), 0);
+    lineno = rb_funcall(location, rb_intern("lineno"), 0);
+    context->init_stack_files[i] = path != Qnil ? RSTRING_PTR(path) : "";
+  }
+
+
   context->stack = NULL;
   context->thnum = ++thnum_current;
   context->thread = thread;
@@ -289,7 +303,10 @@ Context_stop_next(int argc, VALUE *argv, VALUE self)
   if(FIX2INT(steps) < 0) rb_raise(rb_eRuntimeError, "Steps argument can't be negative.");
 
   Data_Get_Struct(self, debug_context_t, context);
+  
   context->stop_next = FIX2INT(steps);
+  
+  
   if(RTEST(force))
       CTX_FL_SET(context, CTX_FL_FORCE_MOVE);
   else
@@ -305,6 +322,7 @@ Context_step_over(int argc, VALUE *argv, VALUE self)
   debug_context_t *context;
 
   Data_Get_Struct(self, debug_context_t, context);
+
   if(context->stack_size == 0)
     rb_raise(rb_eRuntimeError, "No frames collected.");
 
@@ -335,6 +353,7 @@ Context_stop_frame(VALUE self, VALUE frame)
   debug_context_t *debug_context;
 
   Data_Get_Struct(self, debug_context_t, debug_context);
+  
   if(FIX2INT(frame) < 0 && FIX2INT(frame) >= debug_context->calced_stack_size)
     rb_raise(rb_eRuntimeError, "Stop frame is out of range.");
   /* we decrease stack size by frame and 1 because we use stop_frame after
