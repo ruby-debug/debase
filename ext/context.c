@@ -127,6 +127,7 @@ Context_mark(debug_context_t *context)
 
 static void
 Context_free(debug_context_t *context) {
+  xfree(context->init_stack_files);
   xfree(context);
 }
 
