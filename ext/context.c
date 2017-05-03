@@ -144,7 +144,8 @@ context_create(VALUE thread, VALUE cDebugThread) {
   locations = rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
   context->init_stack_size = context->calced_stack_size = locations != Qnil ? RARRAY_LENINT(locations) : 0;
 
-  context->init_stack_files = malloc(context->init_stack_size * sizeof(char*));
+  context->init_stack_files = ruby_xmalloc2((context->init_stack_size),sizeof(char*));
+  
   int i;
   for (i = 0; i < context->init_stack_size; i++) {
     location = rb_ary_entry(locations, i);
