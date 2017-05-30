@@ -46,18 +46,26 @@ fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
 
   locations = rb_debug_inspector_backtrace_locations(inspector);
   stack_size = locations == Qnil ? 0 : RARRAY_LENINT(locations);
-  context->stack_size = stack_size;
-
+  context->stack_size = 0;
+  
   for (i = 0; i < stack_size; i++) {
-    frame = ALLOC(debug_frame_t);
+    
     location = rb_ary_entry(locations, i);
-    path = rb_funcall(location, rb_intern("path"), 0);
-    lineno = rb_funcall(location, rb_intern("lineno"), 0);
-    file = path != Qnil ? RSTRING_PTR(path) : "";
-    line = FIX2INT(lineno);
-    fill_frame(frame, file, line, rb_debug_inspector_frame_binding_get(inspector, i), rb_debug_inspector_frame_self_get(inspector, i));
-    frame->prev = context->stack;
-    context->stack = frame;
+    VALUE iseq = rb_debug_inspector_frame_iseq_get(inspector, i);
+      
+    if(iseq != Qnil)
+    {
+      frame = ALLOC(debug_frame_t);
+      path = rb_funcall(location, rb_intern("path"), 0);
+      lineno = rb_funcall(location, rb_intern("lineno"), 0);
+      file = path != Qnil ? RSTRING_PTR(path) : "";
+      line = FIX2INT(lineno);
+      
+      fill_frame(frame, file, line, rb_debug_inspector_frame_binding_get(inspector, i), rb_debug_inspector_frame_self_get(inspector, i));
+      frame->prev = context->stack;
+      context->stack = frame;
+      context->stack_size++;
+    }
   }
 }
 
