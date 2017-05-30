@@ -56,8 +56,6 @@ fill_stack(debug_context_t *context, const rb_debug_inspector_t *inspector) {
     if(iseq != Qnil)
     {
       frame = ALLOC(debug_frame_t);
-      VALUE class = rb_funcall(location, rb_intern("class"), 0);
-      VALUE class_name = rb_funcall(location, rb_intern("to_s"), 0);
       path = rb_funcall(location, rb_intern("path"), 0);
       lineno = rb_funcall(location, rb_intern("lineno"), 0);
       file = path != Qnil ? RSTRING_PTR(path) : "";
