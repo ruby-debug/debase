@@ -37,7 +37,7 @@ print_debug(const char *message, ...)
   va_end(ap);
 }
 
-inline int
+static inline int
 check_stop_frame(debug_context_t *context) {
   return context->calced_stack_size == context->stop_frame && context->calced_stack_size >= 0;
 }
