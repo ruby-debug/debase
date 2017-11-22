@@ -123,6 +123,44 @@ Breakpoint_source(VALUE self)
 }
 
 static VALUE
+Breakpoint_expr_get(VALUE self)
+{
+  breakpoint_t *breakpoint;
+
+  Data_Get_Struct(self, breakpoint_t, breakpoint);
+  return breakpoint->expr;
+}
+
+static VALUE
+Breakpoint_expr_set(VALUE self, VALUE new_val)
+{
+  breakpoint_t *breakpoint;
+
+  Data_Get_Struct(self, breakpoint_t, breakpoint);
+  breakpoint->expr = new_val;
+  return breakpoint->expr;
+}
+
+static VALUE
+Breakpoint_enabled_set(VALUE self, VALUE new_val)
+{
+  breakpoint_t *breakpoint;
+
+  Data_Get_Struct(self, breakpoint_t, breakpoint);
+  breakpoint->enabled = new_val;
+  return breakpoint->enabled;
+}
+
+static VALUE
+Breakpoint_enabled_get(VALUE self)
+{
+  breakpoint_t *breakpoint;
+
+  Data_Get_Struct(self, breakpoint_t, breakpoint);
+  return breakpoint->enabled;
+}
+
+static VALUE
 Breakpoint_pos(VALUE self)
 {
   breakpoint_t *breakpoint;
@@ -267,6 +305,14 @@ Init_breakpoint(VALUE mDebase)
   rb_define_method(cBreakpoint, "id", Breakpoint_id, 0);
   rb_define_method(cBreakpoint, "source", Breakpoint_source, 0);
   rb_define_method(cBreakpoint, "pos", Breakpoint_pos, 0);
+
+  /* <For tests> */
+  rb_define_method(cBreakpoint, "expr", Breakpoint_expr_get, 0);
+  rb_define_method(cBreakpoint, "expr=", Breakpoint_expr_set, 1);
+  rb_define_method(cBreakpoint, "enabled", Breakpoint_enabled_get, 0);
+  rb_define_method(cBreakpoint, "enabled=", Breakpoint_enabled_set, 1);
+  /* </For tests> */
+
   rb_define_alloc_func(cBreakpoint, Breakpoint_create);
 
   idEval = rb_intern("eval");
