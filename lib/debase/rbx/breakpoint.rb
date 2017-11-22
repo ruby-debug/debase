@@ -2,7 +2,7 @@ module Debase
   class Breakpoint
     @@global_id = 1
 
-    attr_accessor :source, :pos
+    attr_accessor :source, :pos, :expr, :enabled
     attr_reader :id
 
     def initialize(file, line, expr=nil)
