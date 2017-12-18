@@ -4,7 +4,7 @@
 #define ruby_current_thread ((rb_thread_t *)RTYPEDDATA_DATA(rb_thread_current()))
 
 #if RUBY_API_VERSION_CODE >= 20500
-  #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->ec.cfp)
+  #define TH_CFP(thread) (GET_CFP())
 #else
   #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->cfp)
 #endif
