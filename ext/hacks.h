@@ -4,7 +4,11 @@
 #define ruby_current_thread ((rb_thread_t *)RTYPEDDATA_DATA(rb_thread_current()))
 
 #if RUBY_API_VERSION_CODE >= 20500
-  #define TH_CFP(thread) (GET_CFP())
+  #if (RUBY_RELEASE_YEAR == 2017 && RUBY_RELEASE_MONTH == 10 && RUBY_RELEASE_DAY == 10) //workaround for 2.5.0-preview1
+    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->ec.cfp)
+  #else
+    #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->ec->cfp)
+  #endif
 #else
   #define TH_CFP(thread) ((rb_control_frame_t *)(thread)->cfp)
 #endif
