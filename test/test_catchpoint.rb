@@ -5,7 +5,8 @@ require File.expand_path("helper", File.dirname(__FILE__))
   
 class TestRubyDebugCatchpoint < Test::Unit::TestCase
   def test_catchpoints
-    assert_raise(RuntimeError) {Debugger.catchpoints}
+    Debugger.init_variables
+    assert_raise(RuntimeError) {puts Debugger.catchpoints}
     Debugger.start_
     assert_equal({}, Debugger.catchpoints)
     Debugger.add_catchpoint('ZeroDivisionError')
