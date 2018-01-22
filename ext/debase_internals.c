@@ -45,7 +45,7 @@ static VALUE
 is_path_accepted(VALUE path) {
   VALUE filter;
   if (file_filter_enabled == Qfalse) return Qtrue;
-  filter = rb_funcall(mDebase, idFileFilter, 0, NULL);
+  filter = rb_funcall(mDebase, idFileFilter, 0);
   return rb_funcall(filter, idAccept, 1, path);
 }
 
