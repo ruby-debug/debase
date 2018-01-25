@@ -1,5 +1,4 @@
 #include <debase_internals.h>
-#include <hacks.h>
 
 static VALUE mDebase;                 /* Ruby Debase Module object */
 static VALUE cContext;
@@ -348,7 +347,6 @@ process_line_event(VALUE trace_point, void *data)
       } 
     }
 
-    update_stack_size(context);
     print_event(tp, context);
 
     if (context->thread_pause) {
@@ -409,7 +407,7 @@ process_return_event(VALUE trace_point, void *data)
   if (!check_start_processing(context, rb_thread_current())) return;
 
   --context->calced_stack_size;
-  update_stack_size(context);
+  --context->stack_size;
   /* it is important to check stop_frame after stack size updated
      if the order will be changed change Context_stop_frame accordingly.
   */
@@ -434,7 +432,7 @@ process_call_event(VALUE trace_point, void *data)
   if (!check_start_processing(context, rb_thread_current())) return;
 
   ++context->calced_stack_size;
-  update_stack_size(context);
+  ++context->stack_size;
   print_event(TRACE_POINT, context);
   cleanup(context);
 }
@@ -457,7 +455,6 @@ process_raise_event(VALUE trace_point, void *data)
   Data_Get_Struct(context_object, debug_context_t, context);
   if (!check_start_processing(context, rb_thread_current())) return;
 
-  update_stack_size(context);
   tp = TRACE_POINT;
   if (catchpoint_hit_count(catchpoints, rb_tracearg_raised_exception(tp), &exception_name) != Qnil) {
     rb_ensure(start_inspector, context_object, stop_inspector, Qnil);

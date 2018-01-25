@@ -148,9 +148,8 @@ context_create(VALUE thread, VALUE cDebugThread) {
   VALUE lineno;
 
   context = ALLOC(debug_context_t);
-  context->stack_size = 0;
   locations = rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
-  context->init_stack_size = context->calced_stack_size = locations != Qnil ? RARRAY_LENINT(locations) : 0;
+  context->stack_size = context->init_stack_size = context->calced_stack_size = locations != Qnil ? RARRAY_LENINT(locations) : 0;
 
   context->init_stack_files = ruby_xmalloc2((context->init_stack_size),sizeof(char*));
   
@@ -161,7 +160,6 @@ context_create(VALUE thread, VALUE cDebugThread) {
     lineno = rb_funcall(location, rb_intern("lineno"), 0);
     context->init_stack_files[i] = path != Qnil ? RSTRING_PTR(path) : "";
   }
-
 
   context->stack = NULL;
   context->thnum = ++thnum_current;
