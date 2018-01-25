@@ -2,6 +2,7 @@
 #define DEBASE_INTERNALS
 
 #include <ruby.h>
+#include <vm_core.h>
 #include <ruby/debug.h>
 
 typedef struct rb_trace_arg_struct rb_trace_point_t;
@@ -58,8 +59,6 @@ typedef struct debug_context {
   int dest_frame;
   int calced_stack_size;
   int init_stack_size;
-
-  char **init_stack_files;
 
   char *last_file;
   int last_line;

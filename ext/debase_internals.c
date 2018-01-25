@@ -150,7 +150,7 @@ remove_dead_threads(VALUE thread, VALUE context, VALUE ignored)
   return (IS_THREAD_ALIVE(thread)) ? ST_CONTINUE : ST_DELETE;
 }
 
-static void 
+static void
 cleanup(debug_context_t *context)
 {
   VALUE thread;
@@ -161,7 +161,7 @@ cleanup(debug_context_t *context)
 
   /* release a lock */
   locker = Qnil;
-  
+
   /* let the next thread to run */
   thread = remove_from_locked();
   if(thread != Qnil)
@@ -229,7 +229,7 @@ symbol2str(VALUE symbol)
 
 static inline void
 print_event(rb_trace_point_t *tp, debug_context_t *context)
-{  
+{
   VALUE locations;
   VALUE path;
   VALUE line;
@@ -299,7 +299,7 @@ remove_pause_flag(VALUE thread, VALUE context_object, VALUE ignored)
   return ST_CONTINUE;
 }
 
-static void 
+static void
 call_at_line(debug_context_t *context, char *file, int line, VALUE context_object)
 {
   rb_hash_foreach(contexts, remove_pause_flag, 0);
@@ -338,15 +338,6 @@ process_line_event(VALUE trace_point, void *data)
     line = FIX2INT(lineno);
 
     int i;
-    if(context->calced_stack_size < context->init_stack_size) {
-      for(i = 0; i < context->init_stack_size; i++)
-      {
-        if(strcmp(file, context->init_stack_files[i]) == 0) {
-          not_user_code = 1;
-        }
-      } 
-    }
-
     print_event(tp, context);
 
     if (context->thread_pause) {
