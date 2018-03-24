@@ -81,6 +81,29 @@ module Debase
     def file_filter
       @file_filter ||= FileFilter.new
     end
+
+    module InstructionSequenceMixin
+      def load_iseq(path)
+        iseq = super(path)
+
+        do_load_iseq(iseq)
+
+        iseq
+      end
+
+      def do_load_iseq(iseq)
+        Debugger.set_trace_flag_to_iseq(iseq)
+        iseq.each_child{|child_iseq| do_load_iseq(child_iseq)}
+      end
+    end
+
+    def mp_load_iseq
+      if defined? RubyVM::InstructionSequence.load_iseq
+        class << RubyVM::InstructionSequence
+          prepend InstructionSequenceMixin
+        end
+      end
+    end
   end
 
   class FileFilter

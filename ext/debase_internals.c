@@ -635,6 +635,30 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
   return value;
 }
 
+static const rb_iseq_t *
+my_iseqw_check(VALUE iseqw)
+{
+    rb_iseq_t *iseq = DATA_PTR(iseqw);
+
+    if (!iseq->body) {
+	    ibf_load_iseq_complete(iseq);
+    }
+
+    if (!iseq->body->location.label) {
+	    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+    }
+    return iseq;
+}
+
+static void
+Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq)
+{
+    if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
+        rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
+        rb_iseq_trace_set(iseq, RUBY_EVENT_TRACEPOINT_ALL);
+    }
+}
+
 static VALUE
 Debase_init_variables()
 {
@@ -678,6 +702,7 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "enable_trace_points", Debase_enable_trace_points, 0);
   rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 0);
   rb_define_module_function(mDebase, "init_variables", Debase_init_variables, 0);
+  rb_define_module_function(mDebase, "set_trace_flag_to_iseq", Debase_set_trace_flag_to_iseq, 1);
 
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");
