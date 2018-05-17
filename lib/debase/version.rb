@@ -1,3 +1,3 @@
 module Debase
-  VERSION = "0.2.2.beta15" unless defined? VERSION
+  VERSION = "0.2.3.beta1" unless defined? VERSION
 end
