@@ -58,7 +58,6 @@ typedef struct debug_context {
   /* dest_frame uses calced_stack_size for stepping */
   int dest_frame;
   int calced_stack_size;
-  int init_stack_size;
 
   char *last_file;
   int last_line;

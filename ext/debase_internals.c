@@ -322,7 +322,6 @@ process_line_event(VALUE trace_point, void *data)
   char *file;
   int line;
   int moved;
-  int not_user_code = 0;
 
   context_object = Debase_current_context(mDebase);
   Data_Get_Struct(context_object, debug_context_t, context);
@@ -337,7 +336,7 @@ process_line_event(VALUE trace_point, void *data)
     file = RSTRING_PTR(path);
     line = FIX2INT(lineno);
 
-    int i;
+    update_stack_size(context);
     print_event(tp, context);
 
     if (context->thread_pause) {
@@ -373,7 +372,7 @@ process_line_event(VALUE trace_point, void *data)
     }
 
     breakpoint = breakpoint_find(breakpoints, path, lineno, trace_point);
-    if (not_user_code == 0 && (context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil)) {
+    if (context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
       rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
       context->stop_reason = CTX_STOP_STEP;
       if (breakpoint != Qnil) {
