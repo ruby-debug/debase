@@ -303,7 +303,7 @@ remove_pause_flag(VALUE thread, VALUE context_object, VALUE ignored)
 static void 
 call_at_line(debug_context_t *context, char *file, int line, VALUE context_object)
 {
-  rb_hash_foreach(contexts, remove_pause_flag, 0);
+  context->thread_pause = 0;
   CTX_FL_UNSET(context, CTX_FL_STEPPED);
   CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
   context->last_file = file;
@@ -352,6 +352,8 @@ process_line_event(VALUE trace_point, void *data)
     print_event(tp, context);
 
     if (context->thread_pause) {
+      //don't lock other threads if pause
+      locker = Qnil;
       context->stop_next = 1;
       context->dest_frame = -1;
       moved = 1;
@@ -591,6 +593,12 @@ Debase_contexts(VALUE self)
 }
 
 static VALUE
+Debase_remove_pause_flags()
+{
+  rb_hash_foreach(contexts, remove_pause_flag, 0);
+}
+
+static VALUE
 Debase_breakpoints(VALUE self)
 {
   return breakpoints;
@@ -691,6 +699,8 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "enable_trace_points", Debase_enable_trace_points, 0);
   rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 0);
   rb_define_module_function(mDebase, "init_variables", Debase_init_variables, 0);
+  rb_define_module_function(mDebase, "thread_context", Debase_thread_context, 1);
+  rb_define_module_function(mDebase, "remove_pause_flags", Debase_remove_pause_flags, 0);
 
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");
