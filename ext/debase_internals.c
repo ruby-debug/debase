@@ -637,29 +637,35 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
   return value;
 }
 
-static const rb_iseq_t *
-my_iseqw_check(VALUE iseqw)
-{
-    rb_iseq_t *iseq = DATA_PTR(iseqw);
+#if RUBY_API_VERSION_CODE >= 20500
+    static const rb_iseq_t *
+    my_iseqw_check(VALUE iseqw)
+    {
+        rb_iseq_t *iseq = DATA_PTR(iseqw);
 
-    if (!iseq->body) {
-	    ibf_load_iseq_complete(iseq);
+        if (!iseq->body) {
+            ibf_load_iseq_complete(iseq);
+        }
+
+        if (!iseq->body->location.label) {
+            rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+        }
+        return iseq;
     }
 
-    if (!iseq->body->location.label) {
-	    rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
+    static void
+    Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq)
+    {
+        if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
+            rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
+            rb_iseq_trace_set(iseq, RUBY_EVENT_TRACEPOINT_ALL);
+        }
     }
-    return iseq;
-}
-
-static void
-Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq)
-{
-    if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
-        rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
-        rb_iseq_trace_set(iseq, RUBY_EVENT_TRACEPOINT_ALL);
-    }
-}
+#else
+      static void
+      Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq) {
+      }
+#endif
 
 static VALUE
 Debase_init_variables()
