@@ -160,7 +160,7 @@ context_create(VALUE thread, VALUE cDebugThread) {
     }
   }
 
-  context->stack_size = context->init_stack_size = context->calced_stack_size = stack_size;
+  context->stack_size = context->calced_stack_size = stack_size;
 
   context->stack = NULL;
   context->thnum = ++thnum_current;

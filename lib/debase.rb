@@ -20,7 +20,21 @@ module Debase
       Debugger.const_set('ARGV', ARGV.clone) unless defined? Debugger::ARGV
       Debugger.const_set('PROG_SCRIPT', $0) unless defined? Debugger::PROG_SCRIPT
       Debugger.const_set('INITIAL_DIR', Dir.pwd) unless  defined? Debugger::INITIAL_DIR
-      return Debugger.started? ? block && block.call(self) : Debugger.start_(&block) 
+
+      monkey_patch_prepend
+
+      Debugger.started? ? block && block.call(self) : Debugger.start_(&block)
+    end
+
+    def monkey_patch_prepend
+      class << RubyVM::InstructionSequence
+        def self.prepend(mod, *smth)
+          super
+          if mod.to_s.include? 'Bootsnap'
+            prepend InstructionSequenceMixin
+          end
+        end
+      end
     end
 
     # @param [String] file
@@ -86,22 +100,14 @@ module Debase
       def load_iseq(path)
         iseq = super(path)
 
-        do_load_iseq(iseq)
+        do_set_flags(iseq)
 
         iseq
       end
 
-      def do_load_iseq(iseq)
+      def do_set_flags(iseq)
         Debugger.set_trace_flag_to_iseq(iseq)
-        iseq.each_child{|child_iseq| do_load_iseq(child_iseq)}
-      end
-    end
-
-    def mp_load_iseq
-      if defined? RubyVM::InstructionSequence.load_iseq
-        class << RubyVM::InstructionSequence
-          prepend InstructionSequenceMixin
-        end
+        iseq.each_child{|child_iseq| do_set_flags(child_iseq)}
       end
     end
   end
