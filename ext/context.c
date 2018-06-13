@@ -142,9 +142,6 @@ extern VALUE
 context_create(VALUE thread, VALUE cDebugThread) {
   debug_context_t *context;
   VALUE locations;
-  VALUE location;
-  VALUE path;
-  VALUE lineno;
 
   context = ALLOC(debug_context_t);
   int stack_size = 0;
