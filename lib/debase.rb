@@ -30,7 +30,7 @@ module Debase
       class << RubyVM::InstructionSequence
         def self.prepend(mod, *smth)
           super
-          if mod.to_s.include? 'Bootsnap'
+          if mod.to_s.include? 'Bootsnap' && RUBY_VERSION >= "2.5"
             prepend InstructionSequenceMixin
           end
         end
