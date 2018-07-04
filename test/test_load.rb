@@ -71,5 +71,8 @@ class TestDebugLoad < Test::Unit::TestCase
 
     assert(Debugger.started?)
     Debugger.stop
+
+    class << RubyVM::InstructionSequence; self end.class_eval { undef_method :load_iseq }
+
   end
 end

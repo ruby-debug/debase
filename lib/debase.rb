@@ -30,7 +30,7 @@ module Debase
       class << RubyVM::InstructionSequence
         def self.prepend(mod, *smth)
           super
-          if (mod.to_s.include?('Bootsnap') && RUBY_VERSION >= "2.5")
+          if mod.to_s.include?('Bootsnap') && RUBY_VERSION >= "2.5"
             prepend InstructionSequenceMixin
           end
         end
@@ -107,7 +107,7 @@ module Debase
 
       def do_set_flags(iseq)
         Debugger.set_trace_flag_to_iseq(iseq)
-        iseq.each_child{|child_iseq| do_set_flags(child_iseq)} if iseq.respond_to? :each_child
+        iseq.each_child { |child_iseq| do_set_flags(child_iseq) } if iseq.respond_to? :each_child
       end
     end
   end
