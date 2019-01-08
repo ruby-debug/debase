@@ -2,12 +2,7 @@
 #define DEBASE_INTERNALS
 
 #include "ruby.h"
-#include "vm_core.h"
-#include "version.h"
-#include "iseq.h"
-#include "vm_insnhelper.h"
-#include "method.h"
-#include <ruby/debug.h>
+#include "ruby/debug.h"
 
 typedef struct rb_trace_arg_struct rb_trace_point_t;
 
