@@ -637,47 +637,6 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
   return value;
 }
 
-#if RUBY_API_VERSION_CODE >= 20500 && !(RUBY_RELEASE_YEAR == 2017 && RUBY_RELEASE_MONTH == 10 && RUBY_RELEASE_DAY == 10)
-    static const rb_iseq_t *
-    my_iseqw_check(VALUE iseqw)
-    {
-        rb_iseq_t *iseq = DATA_PTR(iseqw);
-
-        if (!iseq->body) {
-            ibf_load_iseq_complete(iseq);
-        }
-
-        if (!iseq->body->location.label) {
-            rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
-        }
-        return iseq;
-    }
-
-    static void
-    Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq) {
-        if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
-            rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
-            rb_iseq_trace_set(iseq, RUBY_EVENT_TRACEPOINT_ALL);
-        }
-    }
-
-    static void
-    Debase_unset_trace_flags(VALUE self, VALUE rb_iseq) {
-        if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
-            rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
-            rb_iseq_trace_set(iseq, RUBY_EVENT_NONE);
-        }
-    }
-#else
-      static void
-      Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq) {
-      }
-
-      static void
-      Debase_unset_trace_flags(VALUE self, VALUE rb_iseq) {
-      }
-#endif
-
 static VALUE
 Debase_init_variables()
 {
@@ -721,10 +680,6 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "enable_trace_points", Debase_enable_trace_points, 0);
   rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 0);
   rb_define_module_function(mDebase, "init_variables", Debase_init_variables, 0);
-  rb_define_module_function(mDebase, "set_trace_flag_to_iseq", Debase_set_trace_flag_to_iseq, 1);
-
-  //use only for tests
-  rb_define_module_function(mDebase, "unset_iseq_flags", Debase_unset_trace_flags, 1);
 
   idAlive = rb_intern("alive?");
   idAtLine = rb_intern("at_line");

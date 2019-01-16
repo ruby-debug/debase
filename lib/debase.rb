@@ -21,20 +21,7 @@ module Debase
       Debugger.const_set('PROG_SCRIPT', $0) unless defined? Debugger::PROG_SCRIPT
       Debugger.const_set('INITIAL_DIR', Dir.pwd) unless  defined? Debugger::INITIAL_DIR
 
-      monkey_patch_prepend
-
       Debugger.started? ? block && block.call(self) : Debugger.start_(&block)
-    end
-
-    def monkey_patch_prepend
-      class << RubyVM::InstructionSequence
-        def self.prepend(mod, *smth)
-          super
-          if mod.to_s.include?('Bootsnap') && RUBY_VERSION >= "2.5"
-            prepend InstructionSequenceMixin
-          end
-        end
-      end
     end
 
     # @param [String] file
@@ -94,21 +81,6 @@ module Debase
 
     def file_filter
       @file_filter ||= FileFilter.new
-    end
-
-    module InstructionSequenceMixin
-      def load_iseq(path)
-        iseq = super(path)
-
-        do_set_flags(iseq)
-
-        iseq
-      end
-
-      def do_set_flags(iseq)
-        Debugger.set_trace_flag_to_iseq(iseq)
-        iseq.each_child { |child_iseq| do_set_flags(child_iseq) } if iseq.respond_to? :each_child
-      end
     end
   end
 
