@@ -637,14 +637,14 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
   return value;
 }
 
-#if RUBY_API_VERSION_CODE >= 20500 && !(RUBY_RELEASE_YEAR == 2017 && RUBY_RELEASE_MONTH == 10 && RUBY_RELEASE_DAY == 10)
+#if RUBY_API_VERSION_CODE >= 20500 && RUBY_API_VERSION_CODE < 20600 && !(RUBY_RELEASE_YEAR == 2017 && RUBY_RELEASE_MONTH == 10 && RUBY_RELEASE_DAY == 10)
     static const rb_iseq_t *
     my_iseqw_check(VALUE iseqw)
     {
         rb_iseq_t *iseq = DATA_PTR(iseqw);
 
         if (!iseq->body) {
-            ibf_load_iseq_complete(iseq);
+            return NULL;
         }
 
         if (!iseq->body->location.label) {
@@ -657,7 +657,10 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
     Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq) {
         if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
             rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
-            rb_iseq_trace_set(iseq, RUBY_EVENT_TRACEPOINT_ALL);
+
+            if(iseq) {
+                rb_iseq_trace_set(iseq, RUBY_EVENT_TRACEPOINT_ALL);
+            }
         }
     }
 
@@ -665,7 +668,10 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
     Debase_unset_trace_flags(VALUE self, VALUE rb_iseq) {
         if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
             rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
-            rb_iseq_trace_set(iseq, RUBY_EVENT_NONE);
+
+            if(iseq) {
+                rb_iseq_trace_set(iseq, RUBY_EVENT_NONE);
+            }
         }
     }
 #else
