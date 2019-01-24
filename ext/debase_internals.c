@@ -647,9 +647,6 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
             return NULL;
         }
 
-        if (!iseq->body->location.label) {
-            rb_raise(rb_eTypeError, "uninitialized InstructionSequence");
-        }
         return iseq;
     }
 
