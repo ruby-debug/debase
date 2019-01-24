@@ -65,7 +65,7 @@ class TestDebugLoad < Test::Unit::TestCase
     bt = Debugger.debug_load(prog_script, true)
     assert_equal(nil, bt)
     assert_not_nil(@@at_line)
-    if RUBY_VERSION >= '2.5'
+    if RUBY_VERSION >= '2.5' && RUBY_VERSION < '2.6'
       assert_equal(['debase.rb', 101], @@at_line)
     end
 
