@@ -147,6 +147,7 @@ context_create(VALUE thread, VALUE cDebugThread) {
   context->stack_size = 0;
   locations = rb_funcall(thread, rb_intern("backtrace_locations"), 1, INT2FIX(1));
   context->calced_stack_size = locations != Qnil ? RARRAY_LENINT(locations) : 0;
+  context->init_stack_size = -1;
 
   context->stack = NULL;
   context->thnum = ++thnum_current;
@@ -154,6 +155,8 @@ context_create(VALUE thread, VALUE cDebugThread) {
   context->flags = 0;
   context->last_file = NULL;
   context->last_line = -1;
+  context->hit_user_code = 0;
+  context->script_finished = 0;
   context->stop_frame = -1;
   context->thread_pause = 0;
   context->stop_reason = CTX_STOP_NONE;

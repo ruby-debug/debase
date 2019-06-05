@@ -60,6 +60,9 @@ typedef struct debug_context {
 
   char *last_file;
   int last_line;
+  int init_stack_size;
+  int script_finished;
+  int hit_user_code;
 } debug_context_t;
 
 typedef struct

@@ -303,6 +303,8 @@ remove_pause_flag(VALUE thread, VALUE context_object, VALUE ignored)
 static void 
 call_at_line(debug_context_t *context, char *file, int line, VALUE context_object)
 {
+  context->hit_user_code = 1;
+
   rb_hash_foreach(contexts, remove_pause_flag, 0);
   CTX_FL_UNSET(context, CTX_FL_STEPPED);
   CTX_FL_UNSET(context, CTX_FL_FORCE_MOVE);
@@ -331,6 +333,13 @@ process_line_event(VALUE trace_point, void *data)
   tp = TRACE_POINT;
   path = rb_tracearg_path(tp);
 
+  if(context->stack_size == context->init_stack_size && context->hit_user_code) {
+    context->script_finished = 1;
+  }
+  if(context->script_finished) {
+    return;
+  }
+
   if (is_path_accepted(path)) {
 
     lineno = rb_tracearg_lineno(tp);
@@ -339,6 +348,10 @@ process_line_event(VALUE trace_point, void *data)
 
     update_stack_size(context);
     print_event(tp, context);
+
+    if(context->init_stack_size == -1) {
+      context->init_stack_size = context->stack_size;
+    }
 
     if (context->thread_pause) {
       context->stop_next = 1;
