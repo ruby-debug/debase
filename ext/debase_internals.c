@@ -333,7 +333,7 @@ process_line_event(VALUE trace_point, void *data)
   tp = TRACE_POINT;
   path = rb_tracearg_path(tp);
 
-  if(context->stack_size == context->init_stack_size && context->hit_user_code) {
+  if(context->stack_size <= context->init_stack_size && context->hit_user_code) {
     context->script_finished = 1;
   }
   if(context->script_finished) {
