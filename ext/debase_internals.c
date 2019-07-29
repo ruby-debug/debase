@@ -1,5 +1,7 @@
 #include <debase_internals.h>
 #include <hacks.h>
+#include <string.h>
+#include <stdbool.h>
 
 static VALUE mDebase;                 /* Ruby Debase Module object */
 static VALUE cContext;
@@ -22,9 +24,11 @@ static VALUE idAtLine;
 static VALUE idAtBreakpoint;
 static VALUE idAtCatchpoint;
 static VALUE idFileFilter;
-static VALUE idAccept;
 
 static int started = 0;
+
+static VALUE g_included;
+static VALUE g_excluded;
 
 static void
 print_debug(const char *message, ...)
@@ -43,11 +47,50 @@ check_stop_frame(debug_context_t *context) {
 }
 
 static VALUE
-is_path_accepted(VALUE path) {
-  VALUE filter;
+is_path_accepted(debug_context_t *context, VALUE path) {
+
   if (file_filter_enabled == Qfalse) return Qtrue;
+
+  VALUE filter, included, excluded;
+  const VALUE *included_ptr, *excluded_ptr;
+  int included_len, excluded_len;
+  bool is_path_accepted_flg = false;
+  char *file;
+
   filter = rb_funcall(mDebase, idFileFilter, 0);
-  return rb_funcall(filter, idAccept, 1, path);
+  file = RSTRING_PTR(path);
+
+  // include files
+  if (g_included == Qnil) {
+    included = rb_funcall(filter, rb_intern("included"), 0);
+    g_included = included;
+  } else {
+    included = g_included;
+  }
+  included_len = RARRAY_LEN(included);
+  included_ptr = RARRAY_CONST_PTR(included);
+  for (int i = 0; i < included_len; i++) {
+    VALUE val = included_ptr[i];
+    char *include_file_path = RSTRING_PTR(val);
+    is_path_accepted_flg |= strncmp(file, include_file_path, strlen(include_file_path)) == 0;
+  }
+
+  // exclude files
+  if (g_excluded == Qnil) {
+    excluded = rb_funcall(filter, rb_intern("excluded"), 0);
+    g_excluded = excluded;
+  } else {
+    excluded = g_excluded;
+  }
+  excluded_len = RARRAY_LEN(excluded);
+  excluded_ptr = RARRAY_CONST_PTR(excluded);
+  for (int i = 0; i < excluded_len; i++) {
+    VALUE val = excluded_ptr[i];
+    char *exclude_file_path = RSTRING_PTR(val);
+    is_path_accepted_flg &= strncmp(file, exclude_file_path, strlen(exclude_file_path)) != 0;
+  }
+
+  return is_path_accepted_flg;
 }
 
 static VALUE
@@ -340,7 +383,7 @@ process_line_event(VALUE trace_point, void *data)
     return;
   }
 
-  if (is_path_accepted(path)) {
+  if (is_path_accepted(context, path)) {
 
     lineno = rb_tracearg_lineno(tp);
     file = RSTRING_PTR(path);
@@ -465,7 +508,7 @@ process_raise_event(VALUE trace_point, void *data)
     rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
     path = rb_tracearg_path(tp);
 
-    if (is_path_accepted(path) == Qtrue) {
+    if (is_path_accepted(context, path) == Qtrue) {
       lineno = rb_tracearg_lineno(tp);
       file = RSTRING_PTR(path);
       line = FIX2INT(lineno);
@@ -637,6 +680,20 @@ Debase_set_verbose(VALUE self, VALUE value)
   return value;
 }
 
+static VALUE
+Debase_reset_included_cache(VALUE self)
+{
+  g_included = Qnil;
+  return Qtrue;
+}
+
+static VALUE
+Debase_reset_excluded_cache(VALUE self)
+{
+  g_excluded = Qnil;
+  return Qtrue;
+}
+
 /*
  *  call-seq:
  *    Debase.enable_file_filtering(bool)
@@ -704,6 +761,8 @@ Debase_init_variables()
   contexts = Qnil;
   catchpoints = Qnil;
   breakpoints = Qnil;
+  g_included = Qnil;
+  g_excluded = Qnil;
 
   context_init_variables();
   breakpoint_init_variables();
@@ -738,6 +797,8 @@ Init_debase_internals()
   rb_define_module_function(mDebase, "prepare_context", Debase_prepare_context, 0);
   rb_define_module_function(mDebase, "init_variables", Debase_init_variables, 0);
   rb_define_module_function(mDebase, "set_trace_flag_to_iseq", Debase_set_trace_flag_to_iseq, 1);
+  rb_define_module_function(mDebase, "reset_included_cache", Debase_reset_included_cache, 0);
+  rb_define_module_function(mDebase, "reset_excluded_cache", Debase_reset_excluded_cache, 0);
 
   //use only for tests
   rb_define_module_function(mDebase, "unset_iseq_flags", Debase_unset_trace_flags, 1);
@@ -747,7 +808,6 @@ Init_debase_internals()
   idAtBreakpoint = rb_intern("at_breakpoint");
   idAtCatchpoint = rb_intern("at_catchpoint");
   idFileFilter = rb_intern("file_filter");
-  idAccept = rb_intern("accept?");
 
   cContext = Init_context(mDebase);
   Init_breakpoint(mDebase);
@@ -758,4 +818,6 @@ Init_debase_internals()
   rb_global_variable(&breakpoints);
   rb_global_variable(&catchpoints);
   rb_global_variable(&contexts);
+  rb_global_variable(&g_included);
+  rb_global_variable(&g_excluded);
 }

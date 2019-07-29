@@ -119,26 +119,22 @@ module Debase
 
     def include(file_path)
       included << file_path unless excluded.delete(file_path)
+      Debase.reset_included_cache()
     end
 
     def exclude(file_path)
       excluded << file_path unless included.delete(file_path)
+      Debase.reset_excluded_cache()
     end
 
     def enable
       @enabled = true
-      Debase.enable_file_filtering(@enabled);
+      Debase.enable_file_filtering(@enabled)
     end
 
     def disable
       @enabled = false
-      Debase.enable_file_filtering(@enabled);
-    end
-
-    def accept?(file_path)
-      return true unless @enabled
-      return false if file_path.nil?
-      included.any? { |path| file_path.start_with?(path) } && excluded.all? { |path| !file_path.start_with?(path)}
+      Debase.enable_file_filtering(@enabled)
     end
 
     private
