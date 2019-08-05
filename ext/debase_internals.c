@@ -333,13 +333,6 @@ process_line_event(VALUE trace_point, void *data)
   tp = TRACE_POINT;
   path = rb_tracearg_path(tp);
 
-  if(context->stack_size <= context->init_stack_size && context->hit_user_code) {
-    context->script_finished = 1;
-  }
-  if(context->script_finished) {
-    return;
-  }
-
   if (is_path_accepted(path)) {
 
     lineno = rb_tracearg_lineno(tp);
@@ -388,13 +381,18 @@ process_line_event(VALUE trace_point, void *data)
     breakpoint = breakpoint_find(breakpoints, path, lineno, trace_point);
     if (context->stop_next == 0 || context->stop_line == 0 || breakpoint != Qnil) {
       rb_ensure(start_inspector, context_object, stop_inspector, Qnil);
-      context->stop_reason = CTX_STOP_STEP;
-      if (breakpoint != Qnil) {
-        context->stop_reason = CTX_STOP_BREAKPOINT;
-        rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
+      if(context->stack_size <= context->init_stack_size && context->hit_user_code) {
+        context->script_finished = 1;
       }
-      reset_stepping_stop_points(context);
-      call_at_line(context, file, line, context_object);
+      if(!context->script_finished) {
+        context->stop_reason = CTX_STOP_STEP;
+        if (breakpoint != Qnil) {
+          context->stop_reason = CTX_STOP_BREAKPOINT;
+          rb_funcall(context_object, idAtBreakpoint, 1, breakpoint);
+        }
+        reset_stepping_stop_points(context);
+        call_at_line(context, file, line, context_object);
+      }
     }
   }
   cleanup(context);
