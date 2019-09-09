@@ -313,6 +313,35 @@ call_at_line(debug_context_t *context, char *file, int line, VALUE context_objec
   rb_funcall(context_object, idAtLine, 2, rb_str_new2(file), INT2FIX(line));
 }
 
+int count_stack_size() {
+    rb_thread_t *thread = ruby_current_thread;
+    rb_control_frame_t *last_cfp = TH_CFP(thread);
+    rb_control_frame_t *start_cfp = RUBY_VM_END_CONTROL_FRAME(TH_INFO(thread));
+    rb_control_frame_t *cfp;
+
+    ptrdiff_t size, i;
+
+    start_cfp =
+      RUBY_VM_NEXT_CONTROL_FRAME(
+      RUBY_VM_NEXT_CONTROL_FRAME(start_cfp)); /* skip top frames */
+
+    if (start_cfp < last_cfp) {
+        size = 0;
+    }
+    else {
+        size = start_cfp - last_cfp + 1;
+    }
+
+    int stack_size = 0;
+    for (i=0, cfp = start_cfp; i<size; i++, cfp = RUBY_VM_NEXT_CONTROL_FRAME(cfp)) {
+        if (cfp->iseq && cfp->pc) {
+            stack_size++;
+        }
+    }
+
+    return stack_size;
+}
+
 static void
 process_line_event(VALUE trace_point, void *data)
 {
@@ -343,7 +372,8 @@ process_line_event(VALUE trace_point, void *data)
     print_event(tp, context);
 
     if(context->init_stack_size == -1) {
-      context->init_stack_size = context->stack_size;
+        context->stack_size = count_stack_size();
+        context->init_stack_size = context->stack_size;
     }
 
     if (context->thread_pause) {
