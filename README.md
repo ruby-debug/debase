@@ -5,7 +5,6 @@
 # debase
 [![Gem Version](https://badge.fury.io/rb/debase.png)][gem]
 [![Build Status](https://secure.travis-ci.org/denofevil/debase.png)][travis]
-[![official JetBrains project](http://jb.gg/badges/official.svg)][jb_badges]
 
 ## Overview
 
