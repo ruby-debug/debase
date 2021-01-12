@@ -594,7 +594,9 @@ Debase_debug_load(int argc, VALUE *argv, VALUE self)
   rb_load_protect(file, 0, &state);
   if (0 != state) 
   {
-      return rb_errinfo();
+      VALUE error_info = rb_errinfo();
+      rb_set_errinfo(Qnil);
+      return error_info;
   }
   return Qnil;
 }
