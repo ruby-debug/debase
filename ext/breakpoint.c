@@ -257,7 +257,12 @@ check_breakpoint_expr(VALUE breakpoint_object, VALUE trace_point)
 
   args = rb_ary_new3(2, breakpoint->expr, binding);
   result = rb_protect(eval_expression, args, &error);
-  return !error && RTEST(result);
+  if(error){
+    rb_set_errinfo(Qnil);
+    return 0;
+  }
+
+  return RTEST(result);
 }
 
 static VALUE

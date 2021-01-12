@@ -24,6 +24,9 @@ class TestDebugLoad < Test::Unit::TestCase
 
     # Without stopping
     bt = Debugger.debug_load(prog_script, false)
+    if !bt.nil? && bt.is_a?(Exception)
+      STDERR.puts bt.backtrace.join("\n")
+    end
     assert_equal(nil, bt)
     assert(Debugger.started?)
     Debugger.stop
