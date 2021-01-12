@@ -4,6 +4,11 @@
 #include "ruby.h"
 #include "ruby/debug.h"
 
+#include <version.h>
+#if RUBY_API_VERSION_CODE >= 30000
+    #include <internal/hash.h>
+#endif
+
 typedef struct rb_trace_arg_struct rb_trace_point_t;
 
 /* Debase::Context */

@@ -40,9 +40,11 @@ hdrs = proc {
 config_file = File.join(File.dirname(__FILE__), 'config_options.rb')
 load config_file if File.exist?(config_file)
 
+$CFLAGS += ' -Werror=implicit-function-declaration'
+
 if ENV['debase_debug']
-  $CFLAGS+=' -Wall -Werror' 
-  $CFLAGS+=' -g3'
+  $CFLAGS += ' -Wall -Werror'
+  $CFLAGS += ' -g3'
 end
 
 dir_config("ruby")
