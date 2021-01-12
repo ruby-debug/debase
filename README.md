@@ -1,10 +1,5 @@
-[gem]: https://rubygems.org/gems/debase
-[travis]: https://travis-ci.org/denofevil/debase
-[jb_badges]: https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub
-
-# debase
 [![Gem Version](https://badge.fury.io/rb/debase.png)][gem]
-[![Build Status](https://secure.travis-ci.org/denofevil/debase.png)][travis]
+[![Build Status](https://secure.travis-ci.org/ruby-debug/debase.png)][travis]
 
 ## Overview
 
