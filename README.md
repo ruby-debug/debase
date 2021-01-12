@@ -1,11 +1,14 @@
+[gem]: https://rubygems.org/gems/debase
+
+[travis]: https://travis-ci.org/ruby-debug/debase
+
 [![Gem Version](https://badge.fury.io/rb/debase.png)][gem]
 [![Build Status](https://secure.travis-ci.org/ruby-debug/debase.png)][travis]
 
 ## Overview
 
-debase is a fast implementation of the standard debugger debug.rb for
-Ruby 2.0.0. The faster execution speed and 2.0.0 compatibility is achieved
-by utilizing a TracePoint mechanism in the Ruby C API.
+debase is a fast implementation of the standard debugger debug.rb for Ruby 2.0.0. The faster execution speed and 2.0.0
+compatibility is achieved by utilizing a TracePoint mechanism in the Ruby C API.
 
 ## Requirements
 
