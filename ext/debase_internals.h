@@ -5,6 +5,11 @@
 #include "ruby/debug.h"
 
 #include <version.h>
+#if RUBY_API_VERSION_CODE == 20500
+    #include <vm_core.h>
+    #include <iseq.h>
+#endif
+
 #if RUBY_API_VERSION_CODE >= 30000
     #include <internal/hash.h>
 #endif
