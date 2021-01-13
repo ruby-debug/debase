@@ -1,9 +1,5 @@
-[gem]: https://rubygems.org/gems/debase
-
-[travis]: https://travis-ci.org/ruby-debug/debase
-
-[![Gem Version](https://badge.fury.io/rb/debase.png)][gem]
-[![Build Status](https://secure.travis-ci.org/ruby-debug/debase.png)][travis]
+[![Gem Version](https://badge.fury.io/rb/debase.png)](https://rubygems.org/gems/debase)
+[![Build Status](https://travis-ci.org/ruby-debug/debase.svg?branch=master)](https://travis-ci.org/ruby-debug/debase)
 
 ## Overview
 
