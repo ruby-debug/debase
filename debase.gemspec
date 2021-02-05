@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Alexandr Evstigneev", "Dennis Ushakov"]
   s.email       = ["hurricup@gmail.com", "dennis.ushakov@gmail.com"]
   s.homepage    = "https://github.com/ruby-debug/debase"
-  s.summary     = %q{debase is a fast implementation of the standard Ruby debugger debug.rb for Ruby 2.0}
+  s.summary = %q{debase is a fast implementation of the standard Ruby debugger debug.rb for Ruby 2.0+}
   s.description = <<-EOF
     debase is a fast implementation of the standard Ruby debugger debug.rb for Ruby 2.0+.
     It is implemented by utilizing a new Ruby TracePoint class. The core component
