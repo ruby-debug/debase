@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 2.0"
 
-  s.add_dependency "debase-ruby_core_source", ">= 0.10.12"
+  s.add_dependency "debase-ruby_core_source", ">= 0.10.14"
   s.add_development_dependency "test-unit"
   s.add_development_dependency "rake"
 end
