@@ -4,107 +4,123 @@ matrix:
   include:
     - os: linux
       dist: xenial
+      rvm: 3.2
+    - os: linux
+      dist: xenial
+      rvm: 3.1
+    - os: linux
+      dist: xenial
       rvm: 3.0
     - os: linux
       dist: xenial
-      rvm: 2.7.2
+      rvm: 2.7
     - os: linux
       dist: xenial
-      rvm: 2.6.6
+      rvm: 2.6
     - os: linux
       dist: xenial
-      rvm: 2.5.8
+      rvm: 2.5
     - os: linux
       dist: xenial
-      rvm: 2.4.10
+      rvm: 2.4
     - os: linux
       dist: xenial
-      rvm: 2.3.8
+      rvm: 2.3
     - os: linux
       dist: xenial
-      rvm: 2.2.10
+      rvm: 2.2
     - os: linux
       dist: xenial
-      rvm: 2.1.10
+      rvm: 2.1
     - os: linux
-      dist: xenial
-      rvm: ruby-head
+      dist: bionic
+      rvm: 3.2
+    - os: linux
+      dist: bionic
+      rvm: 3.1
     - os: linux
       dist: bionic
       rvm: 3.0
     - os: linux
       dist: bionic
-      rvm: 2.7.2
+      rvm: 2.7
     - os: linux
       dist: bionic
-      rvm: 2.6.6
+      rvm: 2.6
     - os: linux
       dist: bionic
-      rvm: 2.5.8
+      rvm: 2.5
     - os: linux
       dist: bionic
-      rvm: 2.4.10
+      rvm: 2.4
     - os: linux
       dist: bionic
-      rvm: 2.3.8
+      rvm: 2.3
     - os: linux
-      dist: bionic
-      rvm: ruby-head
+      dist: focal
+      rvm: 3.2
+    - os: linux
+      dist: focal
+      rvm: 3.1
     - os: linux
       dist: focal
       rvm: 3.0
     - os: linux
       dist: focal
-      rvm: 2.7.2
+      rvm: 2.7
     - os: linux
       dist: focal
-      rvm: 2.6.6
+      rvm: 2.6
     - os: linux
       dist: focal
-      rvm: 2.5.8
+      rvm: 2.5
     - os: linux
       dist: focal
-      rvm: 2.4.10
-    - os: linux
-      dist: focal
-      rvm: ruby-head
+      rvm: 2.4
+    - os: osx
+      osx_image: xcode11.3
+      rvm: 3.2
+    - os: osx
+      osx_image: xcode11.3
+      rvm: 3.1
     - os: osx
       osx_image: xcode11.3
       rvm: 3.0
     - os: osx
       osx_image: xcode11.3
-      rvm: 2.7.2
+      rvm: 2.7
     - os: osx
       osx_image: xcode11.3
-      rvm: 2.6.6
+      rvm: 2.6
     - os: osx
       osx_image: xcode11.3
-      rvm: 2.5.8
+      rvm: 2.5
     - os: osx
       osx_image: xcode11.3
-      rvm: 2.4.10
+      rvm: 2.4
     - os: osx
-      osx_image: xcode11.3
-      rvm: ruby-head
+      osx_image: xcode12.2
+      rvm: 3.2
+    - os: osx
+      osx_image: xcode12.2
+      rvm: 3.1
     - os: osx
       osx_image: xcode12.2
       rvm: 3.0
     - os: osx
       osx_image: xcode12.2
-      rvm: 2.7.2
+      rvm: 2.7
     - os: osx
       osx_image: xcode12.2
-      rvm: 2.6.6
+      rvm: 2.6
     - os: osx
       osx_image: xcode12.2
-      rvm: 2.5.8
+      rvm: 2.5
     - os: osx
       osx_image: xcode12.2
-      rvm: 2.4.10
+      rvm: 2.4
     - os: osx
       osx_image: xcode12.2
       rvm: ruby-head
   allow_failures:
-    - os: osx
-      rvm: 3.0
     - rvm: ruby-head
