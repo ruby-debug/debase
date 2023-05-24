@@ -54,7 +54,7 @@ end
 desc "Remove built files"
 task :clean do
   cd "ext" do
-    if File.exists?("Makefile")
+    if File.exist?("Makefile")
       sh "make clean"
       rm "Makefile"
     end
@@ -62,14 +62,14 @@ task :clean do
     rm derived_files unless derived_files.empty?
   end
   cd "ext/attach" do
-    if File.exists?("Makefile")
+    if File.exist?("Makefile")
       sh "make clean"
       rm "Makefile"
     end
     derived_files = Dir.glob(".o") + Dir.glob("*.so") + Dir.glob("*.bundle")
     rm derived_files unless derived_files.empty?
   end
-  if File.exists?('pkg')
+  if File.exist?('pkg')
     cd 'pkg' do
       derived_files = Dir.glob('*.gem')
       rm derived_files unless derived_files.empty?
