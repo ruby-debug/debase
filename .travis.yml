@@ -4,6 +4,12 @@ matrix:
   include:
     - os: linux
       dist: xenial
+      rvm: 3.4-preview2
+    - os: linux
+      dist: xenial
+      rvm: 3.3
+    - os: linux
+      dist: xenial
       rvm: 3.2
     - os: linux
       dist: xenial
@@ -34,6 +40,12 @@ matrix:
       rvm: 2.1
     - os: linux
       dist: bionic
+      rvm: 3.4-preview2
+    - os: linux
+      dist: bionic
+      rvm: 3.3
+    - os: linux
+      dist: bionic
       rvm: 3.2
     - os: linux
       dist: bionic
@@ -58,6 +70,12 @@ matrix:
       rvm: 2.3
     - os: linux
       dist: focal
+      rvm: 3.4-preview2
+    - os: linux
+      dist: focal
+      rvm: 3.3
+    - os: linux
+      dist: focal
       rvm: 3.2
     - os: linux
       dist: focal
@@ -79,6 +97,12 @@ matrix:
       rvm: 2.4
     - os: osx
       osx_image: xcode11.3
+      rvm: 3.4-preview2
+    - os: osx
+      osx_image: xcode11.3
+      rvm: 3.3
+    - os: osx
+      osx_image: xcode11.3
       rvm: 3.2
     - os: osx
       osx_image: xcode11.3
@@ -98,6 +122,12 @@ matrix:
     - os: osx
       osx_image: xcode11.3
       rvm: 2.4
+    - os: osx
+      osx_image: xcode12.2
+      rvm: 3.4-preview2
+    - os: osx
+      osx_image: xcode12.2
+      rvm: 3.3
     - os: osx
       osx_image: xcode12.2
       rvm: 3.2
@@ -122,5 +152,3 @@ matrix:
     - os: osx
       osx_image: xcode12.2
       rvm: ruby-head
-  allow_failures:
-    - rvm: ruby-head

@@ -18,7 +18,7 @@ task :gen_travis do
     versions.each { |version| self << ['linux', 'dist', distro, version] }
   end
 
-  since_24 = %w[2.4 2.5 2.6 2.7 3.0 3.1 3.2].reverse
+  since_24 = %w[2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3 3.4-preview2].reverse
   since_23 = [*since_24, '2.3']
   since_22 = [*since_23, '2.2']
   since_21 = [*since_22, '2.1']
