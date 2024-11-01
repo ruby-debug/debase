@@ -316,7 +316,7 @@ call_at_line(debug_context_t *context, char *file, int line, VALUE context_objec
 int count_stack_size() {
     rb_thread_t *thread = ruby_current_thread;
     rb_control_frame_t *last_cfp = TH_CFP(thread);
-    rb_control_frame_t *start_cfp = RUBY_VM_END_CONTROL_FRAME(TH_INFO(thread));
+    rb_control_frame_t *start_cfp = (rb_control_frame_t *)RUBY_VM_END_CONTROL_FRAME(TH_INFO(thread));
     rb_control_frame_t *cfp;
 
     ptrdiff_t size, i;
@@ -715,12 +715,14 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
         }
     }
 #else
-      static void
+      static VALUE
       Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq) {
+        return Qnil;
       }
 
-      static void
+      static VALUE
       Debase_unset_trace_flags(VALUE self, VALUE rb_iseq) {
+        return Qnil;
       }
 #endif
 
