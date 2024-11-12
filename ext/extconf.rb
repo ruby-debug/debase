@@ -40,7 +40,7 @@ hdrs = proc {
 config_file = File.join(File.dirname(__FILE__), 'config_options.rb')
 load config_file if File.exist?(config_file)
 
-$CFLAGS += ' -Werror=implicit-function-declaration'
+$CFLAGS += ' -Werror=implicit-function-declaration -Werror=discarded-qualifiers'
 
 if ENV['debase_debug']
   $CFLAGS += ' -Wall -Werror'

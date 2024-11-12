@@ -316,8 +316,8 @@ call_at_line(debug_context_t *context, char *file, int line, VALUE context_objec
 int count_stack_size() {
     rb_thread_t *thread = ruby_current_thread;
     rb_control_frame_t *last_cfp = TH_CFP(thread);
-    rb_control_frame_t *start_cfp = RUBY_VM_END_CONTROL_FRAME(TH_INFO(thread));
-    rb_control_frame_t *cfp;
+    const rb_control_frame_t *start_cfp = RUBY_VM_END_CONTROL_FRAME(TH_INFO(thread));
+    const rb_control_frame_t *cfp;
 
     ptrdiff_t size, i;
 
