@@ -11,3 +11,4 @@ ext/**/*.def
 .ruby-gemset
 .ruby-version
 .idea/*
+!.idea/vcs.xml
