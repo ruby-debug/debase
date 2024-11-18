@@ -39,13 +39,30 @@ hdrs = proc {
 #   $CFLAGS='-fPIC -fno-strict-aliasing -g3 -ggdb -O2 -fPIC'
 config_file = File.join(File.dirname(__FILE__), 'config_options.rb')
 load config_file if File.exist?(config_file)
+cflags = [$CFLAGS]
+cflags.push(*%w[
+  -Werror=implicit-function-declaration
+  -Werror=discarded-qualifiers
+  -Werror=incompatible-pointer-types
+])
 
-$CFLAGS += ' -Werror=implicit-function-declaration -Werror=discarded-qualifiers'
+if RbConfig::MAKEFILE_CONFIG['CC'].include?('clang')
+  cflags.push(*%w[
+  -Werror=incompatible-function-pointer-types
+])
+end
+
 
 if ENV['debase_debug']
-  $CFLAGS += ' -Wall -Werror'
-  $CFLAGS += ' -g3'
+  cflags.push(*%w[
+    -Wall
+    -Werror
+    -g3
+  ])
 end
+
+$CFLAGS += ' ' + cflags.join(' ')
+
 
 dir_config("ruby")
 if !Debase::RubyCoreSource.create_makefile_with_core(hdrs, "debase_internals")
