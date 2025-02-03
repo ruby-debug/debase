@@ -693,10 +693,10 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
         return iseq;
     }
 
-    static void
+    static VALUE
     Debase_set_trace_flag_to_iseq(VALUE self, VALUE rb_iseq) {
         if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
-            rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
+            const rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
 
             if(iseq) {
                 rb_iseq_trace_set(iseq, RUBY_EVENT_TRACEPOINT_ALL);
@@ -704,10 +704,10 @@ Debase_enable_file_filtering(VALUE self, VALUE value)
         }
     }
 
-    static void
+    static VALUE
     Debase_unset_trace_flags(VALUE self, VALUE rb_iseq) {
         if (!SPECIAL_CONST_P(rb_iseq) && RBASIC_CLASS(rb_iseq) == rb_cISeq) {
-            rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
+            const rb_iseq_t *iseq = my_iseqw_check(rb_iseq);
 
             if(iseq) {
                 rb_iseq_trace_set(iseq, RUBY_EVENT_NONE);
