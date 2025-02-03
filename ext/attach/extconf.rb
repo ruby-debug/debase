@@ -1,4 +1,4 @@
-if defined?(RUBY_ENGINE) && RUBY_ENGINE != 'ruby'
+if defined?(RUBY_ENGINE) && 'rbx' == RUBY_ENGINE
   # create dummy Makefile to indicate success
   f = File.open(File.join(File.dirname(__FILE__), "Makefile"), "w")
   f.write("all:\n\techo all\ninstall:\n\techo installed\n")

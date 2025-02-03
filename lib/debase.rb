@@ -1,8 +1,5 @@
 if defined?(RUBY_ENGINE) && 'rbx' == RUBY_ENGINE
   require 'debase/rbx'
-elsif defined?(RUBY_ENGINE) && RUBY_ENGINE == 'truffleruby'
-  require "debase/version"
-  return
 else
   require "debase_internals"
 end
